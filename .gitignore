@@ -1,0 +1,6 @@
+/run/
+/.idea/
+!/.idea/inspectionProfiles/code-style-intelij.xml
+/.gradle/
+/build/
+/.settings/
