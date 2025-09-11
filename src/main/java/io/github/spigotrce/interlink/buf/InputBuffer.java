@@ -1,9 +1,12 @@
 package io.github.spigotrce.interlink.buf;
 
 import com.google.common.io.ByteArrayDataInput;
+import io.github.spigotrce.interlink.packet.*;
 import org.jspecify.annotations.*;
 
 import java.io.*;
+import java.util.*;
+import java.util.function.*;
 
 public class InputBuffer implements ByteArrayDataInput {
   final DataInput input;
@@ -140,5 +143,31 @@ public class InputBuffer implements ByteArrayDataInput {
 
   public <T extends Enum<T>> T readEnumConstant(Class<T> enumClass) {
     return enumClass.getEnumConstants()[this.readInt()];
+  }
+
+  public <T extends Packet<?>> T readData(Packet<T> packet) {
+    PacketCodec<T> codec = packet.getCodec();
+    return codec.read(this);
+  }
+
+  public <T> Optional<T> readOptional(Function<InputBuffer, T> reader) {
+    boolean present = this.readBoolean();
+    if (!present) {
+      return Optional.empty();
+    }
+    return Optional.of(reader.apply(this));
+  }
+
+  public <T> List<T> readList(IntFunction<T[]> generator, Function<InputBuffer, T> reader) {
+    int size = this.readInt();
+    List<T> list = new ArrayList<>(size);
+    for (int i = 0; i < size; i++) {
+      list.add(reader.apply(this));
+    }
+    return list;
+  }
+
+  public UUID readUUID() {
+    return new UUID(this.readLong(), this.readLong());
   }
 }

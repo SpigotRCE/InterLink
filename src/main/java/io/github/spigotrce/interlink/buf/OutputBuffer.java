@@ -1,8 +1,11 @@
 package io.github.spigotrce.interlink.buf;
 
 import com.google.common.io.ByteArrayDataOutput;
+import io.github.spigotrce.interlink.packet.*;
 
 import java.io.*;
+import java.util.*;
+import java.util.function.BiConsumer;
 
 public class OutputBuffer implements ByteArrayDataOutput {
   final DataOutput output;
@@ -131,6 +134,32 @@ public class OutputBuffer implements ByteArrayDataOutput {
 
   public void writeEnumConstant(Enum<?> instance) {
     writeInt(instance.ordinal());
+  }
+
+  public void writePacket(Packet<?> packet) {
+    @SuppressWarnings("unchecked") PacketCodec<Packet<?>> codec =(PacketCodec<Packet<?>>) packet.getCodec();
+    codec.write(packet, this);
+  }
+
+  public <T> void writeOptional(T value, BiConsumer<OutputBuffer, T> writer) {
+    if (value == null) {
+      this.writeBoolean(false);
+    } else {
+      this.writeBoolean(true);
+      writer.accept(this, value);
+    }
+  }
+
+  public <T> void writeList(List<T> list, BiConsumer<OutputBuffer, T> writer) {
+    this.writeInt(list.size());
+    for (T item : list) {
+      writer.accept(this, item);
+    }
+  }
+
+  public void writeUUID(UUID uuid) {
+    this.writeLong(uuid.getMostSignificantBits());
+    this.writeLong(uuid.getLeastSignificantBits());
   }
 
   public byte[] toByteArray() {
