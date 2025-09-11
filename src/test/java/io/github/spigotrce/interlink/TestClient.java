@@ -11,21 +11,16 @@ public class TestClient {
   public static void main(String[] args) throws Exception {
     String host = "localhost";
     int port = 5555;
+    ClientPacketRegistry registry = new ClientPacketRegistry();
 
     try (Socket socket = new Socket(host, port)) {
-      Connection connection = new Connection(socket, SharedPacketRegistry.registry);
+      Connection connection = new Connection(socket, registry);
 
       new Thread(() -> {
         try {
           while (true) {
             Packet<?> packet = connection.read();
-            if (packet instanceof MessagePacket(String message, MessagePacket.Type type)) {
-              if (type == MessagePacket.Type.CHAT) {
-                System.out.println("[Server] " + message);
-              } else {
-                throw new AssertionError("Impossible!");
-              }
-            }
+            registry.handle(packet);
           }
         } catch (Exception e) {
           System.out.println("Connection closed or error: " + e.getMessage());

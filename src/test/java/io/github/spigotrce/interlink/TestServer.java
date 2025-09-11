@@ -9,6 +9,7 @@ public class TestServer {
 
   public static void main(String[] args) throws Exception {
     int port = 5555;
+    ServerPacketRegistry registry = new ServerPacketRegistry();
 
     try (ServerSocket serverSocket = new ServerSocket(port)) {
       System.out.println("Server listening on port " + port);
@@ -17,7 +18,7 @@ public class TestServer {
         Socket clientSocket = serverSocket.accept();
         System.out.println("Client connected: " + clientSocket.getInetAddress());
 
-        Connection connection = new Connection(clientSocket, SharedPacketRegistry.registry);
+        Connection connection = new Connection(clientSocket, registry);
 
         connection.send(new MessagePacket("Welcome!", MessagePacket.Type.CHAT));
 
@@ -25,15 +26,7 @@ public class TestServer {
           try {
             while (true) {
               Packet<?> packet = connection.read();
-              if (packet instanceof MessagePacket(String message, MessagePacket.Type type)) {
-                if (type == MessagePacket.Type.CHAT) {
-                  System.out.println("Received message: " + message);
-                } else if (type == MessagePacket.Type.COMMAND) {
-                  System.out.println("Received command: " + message);
-                } else {
-                  throw new AssertionError("Impossible!");
-                }
-              }
+              registry.handle(packet);
             }
           } catch (Exception e) {
             e.printStackTrace();
