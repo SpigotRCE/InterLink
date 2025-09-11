@@ -16,11 +16,6 @@ public class PacketRegistry {
     entry.codec().write(packet, out);
   }
 
-  public Packet<?> decode(int id, ByteArrayDataInput in) {
-    @SuppressWarnings("unchecked") PacketEntry<Packet<?>> entry = (PacketEntry<Packet<?>>) packets.get(id);
-    return entry.codec().read(in);
-  }
-
   public int getId(Packet<?> packet) {
     for (PacketEntry<? extends Packet<?>> entry : packets) {
       if (entry.clazz().equals(packet.getClass())) {
@@ -28,6 +23,11 @@ public class PacketRegistry {
       }
     }
     return -1;
+  }
+
+  public Packet<?> decode(int id, ByteArrayDataInput in) {
+    @SuppressWarnings("unchecked") PacketEntry<Packet<?>> entry = (PacketEntry<Packet<?>>) packets.get(id);
+    return entry.codec().read(in);
   }
 
   public record PacketEntry<T extends Packet<?>>(Class<T> clazz, PacketCodec<T> codec) {
