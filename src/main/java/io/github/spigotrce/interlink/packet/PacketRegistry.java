@@ -3,12 +3,13 @@ package io.github.spigotrce.interlink.packet;
 import io.github.spigotrce.interlink.buf.*;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 public class PacketRegistry {
   public final List<PacketEntry<? extends Packet<?>>> packets = new ArrayList<>();
 
-  public <T extends Packet<?>> void registerPacket(Class<T> packetClass, PacketCodec<T> codec) {
-    packets.add(new PacketEntry<>(packetClass, codec));
+  public <T extends Packet<?>> void registerPacket(Class<T> packetClass, PacketCodec<T> codec, Consumer<T> handler) {
+    packets.add(new PacketEntry<>(packetClass, codec, handler));
   }
 
   public void encode(Packet<?> packet, OutputBuffer out) {
@@ -30,6 +31,11 @@ public class PacketRegistry {
     return entry.codec().read(in);
   }
 
-  public record PacketEntry<T extends Packet<?>>(Class<T> clazz, PacketCodec<T> codec) {
+  public void handle(Packet<?> packet) {
+    @SuppressWarnings("unchecked") PacketEntry<Packet<?>> entry = (PacketEntry<Packet<?>>) packets.get(getId(packet));
+    entry.handler.accept(packet);
+  }
+
+  public record PacketEntry<T extends Packet<?>>(Class<T> clazz, PacketCodec<T> codec, Consumer<T> handler) {
   }
 }
