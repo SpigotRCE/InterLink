@@ -13,7 +13,8 @@ public class PacketCodec<T> {
     this.writer = writer;
   }
 
-  public static <T> PacketCodec<T> of(Function<ByteArrayDataInput, T> reader, BiConsumer<T, ByteArrayDataOutput> writer) {
+  public static <T> PacketCodec<T> of(Function<ByteArrayDataInput, T> reader,
+    BiConsumer<T, ByteArrayDataOutput> writer) {
     return new PacketCodec<>(reader, writer);
   }
 
