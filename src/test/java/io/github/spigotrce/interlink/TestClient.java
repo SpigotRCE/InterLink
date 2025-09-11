@@ -14,7 +14,7 @@ public class TestClient {
     ClientPacketRegistry registry = new ClientPacketRegistry();
 
     try (Socket socket = new Socket(host, port)) {
-      Connection connection = new Connection(socket, registry, 128);
+      Connection connection = new Connection(socket, registry, 128, SharedKey.KEY, SharedKey.IV);
 
       new Thread(() -> {
         try {
