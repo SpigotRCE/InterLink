@@ -19,8 +19,12 @@ public class TestClient {
         try {
           while (true) {
             Packet<?> packet = connection.read();
-            if (packet instanceof MessagePacket(String message)) {
-              System.out.println("[Server] " + message);
+            if (packet instanceof MessagePacket(String message, MessagePacket.Type type)) {
+              if (type == MessagePacket.Type.CHAT) {
+                System.out.println("[Server] " + message);
+              } else {
+                throw new AssertionError("Impossible!");
+              }
             }
           }
         } catch (Exception e) {
@@ -37,7 +41,11 @@ public class TestClient {
           break;
         }
 
-        connection.send(new MessagePacket(input));
+        if (input.startsWith("!")) {
+          connection.send(new MessagePacket(input, MessagePacket.Type.COMMAND));
+        } else {
+          connection.send(new MessagePacket(input, MessagePacket.Type.CHAT));
+        }
       }
 
       connection.close();

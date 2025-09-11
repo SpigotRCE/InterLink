@@ -1,28 +1,28 @@
 package io.github.spigotrce.interlink.packet;
 
-import com.google.common.io.*;
+import io.github.spigotrce.interlink.buf.*;
 
 import java.util.function.*;
 
 public class PacketCodec<T> {
-  private final Function<ByteArrayDataInput, T> reader;
-  private final BiConsumer<T, ByteArrayDataOutput> writer;
+  private final Function<InputBuffer, T> reader;
+  private final BiConsumer<T, OutputBuffer> writer;
 
-  private PacketCodec(Function<ByteArrayDataInput, T> reader, BiConsumer<T, ByteArrayDataOutput> writer) {
+  private PacketCodec(Function<InputBuffer, T> reader, BiConsumer<T, OutputBuffer> writer) {
     this.reader = reader;
     this.writer = writer;
   }
 
-  public static <T> PacketCodec<T> of(Function<ByteArrayDataInput, T> reader,
-    BiConsumer<T, ByteArrayDataOutput> writer) {
+  public static <T> PacketCodec<T> of(Function<InputBuffer, T> reader,
+    BiConsumer<T, OutputBuffer> writer) {
     return new PacketCodec<>(reader, writer);
   }
 
-  public T read(ByteArrayDataInput in) {
+  public T read(InputBuffer in) {
     return reader.apply(in);
   }
 
-  public void write(T value, ByteArrayDataOutput out) {
+  public void write(T value, OutputBuffer out) {
     writer.accept(value, out);
   }
 }

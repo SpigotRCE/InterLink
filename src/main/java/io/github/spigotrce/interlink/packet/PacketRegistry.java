@@ -1,6 +1,6 @@
 package io.github.spigotrce.interlink.packet;
 
-import com.google.common.io.*;
+import io.github.spigotrce.interlink.buf.*;
 
 import java.util.*;
 
@@ -11,7 +11,7 @@ public class PacketRegistry {
     packets.add(new PacketEntry<>(packetClass, codec));
   }
 
-  public void encode(Packet<?> packet, ByteArrayDataOutput out) {
+  public void encode(Packet<?> packet, OutputBuffer out) {
     @SuppressWarnings("unchecked") PacketEntry<Packet<?>> entry = (PacketEntry<Packet<?>>) packets.get(getId(packet));
     entry.codec().write(packet, out);
   }
@@ -25,7 +25,7 @@ public class PacketRegistry {
     return -1;
   }
 
-  public Packet<?> decode(int id, ByteArrayDataInput in) {
+  public Packet<?> decode(int id, InputBuffer in) {
     @SuppressWarnings("unchecked") PacketEntry<Packet<?>> entry = (PacketEntry<Packet<?>>) packets.get(id);
     return entry.codec().read(in);
   }

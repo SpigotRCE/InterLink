@@ -19,14 +19,20 @@ public class TestServer {
 
         Connection connection = new Connection(clientSocket, SharedPacketRegistry.registry);
 
-        connection.send(new MessagePacket("Welcome!"));
+        connection.send(new MessagePacket("Welcome!", MessagePacket.Type.CHAT));
 
         new Thread(() -> {
           try {
             while (true) {
               Packet<?> packet = connection.read();
-              if (packet instanceof MessagePacket(String message)) {
-                System.out.println("Received message: " + message);
+              if (packet instanceof MessagePacket(String message, MessagePacket.Type type)) {
+                if (type == MessagePacket.Type.CHAT) {
+                  System.out.println("Received message: " + message);
+                } else if (type == MessagePacket.Type.COMMAND) {
+                  System.out.println("Received command: " + message);
+                } else {
+                  throw new AssertionError("Impossible!");
+                }
               }
             }
           } catch (Exception e) {
