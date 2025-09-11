@@ -1,6 +1,7 @@
 package io.github.spigotrce.interlink.connection;
 
 import com.google.common.io.*;
+import io.github.spigotrce.interlink.buf.*;
 import io.github.spigotrce.interlink.packet.*;
 
 import java.io.*;
@@ -23,7 +24,7 @@ public class Connection {
   }
 
   public void send(Packet<?> packet) throws IOException {
-    ByteArrayDataOutput out = ByteStreams.newDataOutput();
+    OutputBuffer out = OutputBuffer.create();
     int id = registry.getId(packet);
     if (id == -1) {
       throw new IOException("Unregistered packet: " + packet.getClass());
@@ -40,7 +41,7 @@ public class Connection {
     int length = input.readInt();
     byte[] data = new byte[length];
     input.readFully(data);
-    ByteArrayDataInput in = ByteStreams.newDataInput(data);
+    InputBuffer in = InputBuffer.create(data);
     int id = in.readInt();
     return registry.decode(id, in);
   }

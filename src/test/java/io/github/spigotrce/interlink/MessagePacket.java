@@ -1,20 +1,26 @@
 package io.github.spigotrce.interlink;
 
-import com.google.common.io.*;
+import io.github.spigotrce.interlink.buf.*;
 import io.github.spigotrce.interlink.packet.*;
 
-public record MessagePacket(String message) implements Packet<MessagePacket> {
+public record MessagePacket(String message, Type type) implements Packet<MessagePacket> {
   public static final PacketCodec<MessagePacket> CODEC = PacketCodec.of(MessagePacket::new, MessagePacket::encode);
 
-  public MessagePacket(ByteArrayDataInput in) {
-    this(in.readUTF());
+  public MessagePacket(InputBuffer in) {
+    this(in.readUTF(), in.readEnumConstant(Type.class));
   }
 
-  public void encode(ByteArrayDataOutput out) {
+  public void encode(OutputBuffer out) {
     out.writeUTF(message);
+    out.writeEnumConstant(type);
   }
 
   @Override public PacketCodec<MessagePacket> getCodec() {
     return CODEC;
+  }
+
+  static enum Type {
+    CHAT,
+    COMMAND
   }
 }
