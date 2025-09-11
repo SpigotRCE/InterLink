@@ -18,7 +18,7 @@ public class TestServer {
         Socket clientSocket = serverSocket.accept();
         System.out.println("Client connected: " + clientSocket.getInetAddress());
 
-        Connection connection = new Connection(clientSocket, registry, 128);
+        Connection connection = new Connection(clientSocket, registry, 128, SharedKey.KEY, SharedKey.IV);
 
         connection.send(new MessagePacket("Welcome!", MessagePacket.Type.CHAT));
 
