@@ -1,38 +1,46 @@
 package io.github.spigotrce.interlink;
 
 import io.github.spigotrce.interlink.connection.Connection;
-import io.github.spigotrce.interlink.packet.Packet;
+import io.github.spigotrce.interlink.packet.DisconnectPacket;
+import io.github.spigotrce.interlink.registry.ServerLoginPacketRegistry;
+import io.github.spigotrce.interlink.server.Server;
 
-import java.net.*;
+import java.util.*;
 
 public class TestServer {
+  public static final ArrayList<Connection> connections = new ArrayList<>();
+  public static final HashMap<String, Connection> namedConnections = new HashMap<>();
 
   public static void main(String[] args) throws Exception {
-    int port = 5555;
-    ServerPacketRegistry registry = new ServerPacketRegistry();
+    Server server = new Server(Shared.host,
+      Shared.port,
+      Shared.key,
+      Shared.iv,
+      TestServer::onConnect,
+      TestServer::onDisconnect,
+      TestServer::onException);
 
-    try (ServerSocket serverSocket = new ServerSocket(port)) {
-      System.out.println("Server listening on port " + port);
+    server.start();
+  }
 
-      while (true) {
-        Socket clientSocket = serverSocket.accept();
-        System.out.println("Client connected: " + clientSocket.getInetAddress());
+  public static void onConnect(Connection connection) {
+    connection.setRegistry(new ServerLoginPacketRegistry(connection));
+  }
 
-        Connection connection = new Connection(clientSocket, registry, 128, SharedKey.KEY, SharedKey.IV);
+  public static void onDisconnect(Connection connection) {
+    connections.remove(connection);
+  }
 
-        connection.send(new MessagePacket("Welcome!", MessagePacket.Type.CHAT));
-
-        new Thread(() -> {
-          try {
-            while (true) {
-              Packet<?> packet = connection.read();
-              registry.handle(packet);
-            }
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-        }).start();
+  public static void onException(Connection connection, Throwable throwable) {
+    throwable.printStackTrace();
+    try {
+      if (!connection.getSocket().isClosed()) {
+        connection.send(new DisconnectPacket("Exception: " + throwable.getMessage()));
       }
+    } catch (Exception e) {
+      e.printStackTrace();
     }
+
+    connections.remove(connection);
   }
 }

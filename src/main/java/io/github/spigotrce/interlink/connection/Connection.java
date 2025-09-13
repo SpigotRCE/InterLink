@@ -12,21 +12,20 @@ import java.net.Socket;
 
 public class Connection {
   private final Socket socket;
-  private final PacketRegistry registry;
   private final DataOutputStream output;
   private final DataInputStream input;
-  private final int compressionThreshold;
 
   private final Cipher encryptCipher;
   private final Cipher decryptCipher;
 
-  public Connection(Socket socket, PacketRegistry registry, int compressionThreshold, byte[] key, byte[] iv)
+  private PacketRegistry registry;
+  private int compressionThreshold = 0;
+
+  public Connection(Socket socket, byte[] key, byte[] iv)
     throws Exception {
     this.socket = socket;
-    this.registry = registry;
     this.output = new DataOutputStream(socket.getOutputStream());
     this.input = new DataInputStream(socket.getInputStream());
-    this.compressionThreshold = compressionThreshold;
 
     SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
     IvParameterSpec ivSpec = new IvParameterSpec(iv);
@@ -50,7 +49,7 @@ public class Connection {
 
     byte[] data = out.toByteArray();
 
-    boolean compressed = data.length >= compressionThreshold;
+    boolean compressed = data.length >= compressionThreshold && compressionThreshold != 0;
     if (compressed) {
       data = ZLibCompressor.compress(data);
     }
@@ -86,6 +85,38 @@ public class Connection {
 
   public Socket getSocket() {
     return socket;
+  }
+
+  public DataOutputStream getOutput() {
+    return output;
+  }
+
+  public DataInputStream getInput() {
+    return input;
+  }
+
+  public Cipher getEncryptCipher() {
+    return encryptCipher;
+  }
+
+  public Cipher getDecryptCipher() {
+    return decryptCipher;
+  }
+
+  public PacketRegistry getRegistry() {
+    return registry;
+  }
+
+  public void setRegistry(PacketRegistry registry) {
+    this.registry = registry;
+  }
+
+  public int getCompressionThreshold() {
+    return compressionThreshold;
+  }
+
+  public void setCompressionThreshold(int compressionThreshold) {
+    this.compressionThreshold = compressionThreshold;
   }
 
   public void close() throws IOException {
