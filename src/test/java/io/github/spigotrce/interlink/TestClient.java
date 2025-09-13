@@ -1,49 +1,67 @@
 package io.github.spigotrce.interlink;
 
+import io.github.spigotrce.interlink.client.Client;
 import io.github.spigotrce.interlink.connection.Connection;
-import io.github.spigotrce.interlink.packet.Packet;
+import io.github.spigotrce.interlink.packet.*;
+import io.github.spigotrce.interlink.registry.*;
 
-import java.net.Socket;
 import java.util.Scanner;
 
 public class TestClient {
-
   public static void main(String[] args) throws Exception {
-    String host = "localhost";
-    int port = 5555;
-    ClientPacketRegistry registry = new ClientPacketRegistry();
+    Client testClient = new Client(Shared.host,
+      Shared.port,
+      Shared.key,
+      Shared.iv,
+      TestClient::onConnect,
+      TestClient::onDisconnect,
+      TestClient::onException);
 
-    try (Socket socket = new Socket(host, port)) {
-      Connection connection = new Connection(socket, registry, 128, SharedKey.KEY, SharedKey.IV);
+    testClient.connect();
 
-      new Thread(() -> {
-        try {
-          while (true) {
-            Packet<?> packet = connection.read();
-            registry.handle(packet);
-          }
-        } catch (Exception e) {
-          System.out.println("Connection closed or error: " + e.getMessage());
-        }
-      }, "Client-Receiver").start();
-
-      Scanner scanner = new Scanner(System.in);
-      System.out.println("Connected to server. Type messages to send:");
-
-      while (true) {
-        String input = scanner.nextLine();
-        if (input.equalsIgnoreCase("exit")) {
-          break;
-        }
-
-        if (input.startsWith("!")) {
-          connection.send(new MessagePacket(input, MessagePacket.Type.COMMAND));
-        } else {
-          connection.send(new MessagePacket(input, MessagePacket.Type.CHAT));
-        }
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      try {
+        testClient.disconnect();
+      } catch (Exception e) {
+        e.printStackTrace();
       }
+    }, "Client-Shutdown"));
 
-      connection.close();
+    while (true) {
+      String message = input("");
+      try {
+        if (message.equalsIgnoreCase("/exit")) {
+          testClient.disconnect();
+          break;
+        } else {
+          testClient.getConnection().send(new ChatPacket(message));
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
+  }
+
+  public static void onConnect(Connection connection) {
+    connection.setRegistry(new ClientLoginPacketRegistry(connection));
+    try {
+      connection.send(new HandshakePacket(input("Enter username: ")));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  public static void onDisconnect(Connection connection) {
+    System.out.println("Disconnected from server!");
+  }
+
+  public static void onException(Throwable throwable) {
+    throwable.printStackTrace();
+  }
+
+  private static String input(String message) {
+    Scanner scanner = new Scanner(System.in);
+    System.out.print(message);
+    return scanner.nextLine();
   }
 }
