@@ -21,12 +21,8 @@ public class ClientLoginPacketRegistry extends PacketRegistry {
   }
 
   public void handle(DisconnectPacket packet) {
-    try {
-      System.out.println("Disconnected from server: " + packet.message());
-      connection.close();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    System.out.println("Disconnected from server: " + packet.message());
+    connection.close();
   }
 
   public void handle(LoginSuccessPacket packet) {

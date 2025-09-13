@@ -18,11 +18,7 @@ public class ClientPlayPacketRegistry extends PacketRegistry {
   public void handle(DisconnectPacket packet) {
     System.out.println("Disconnected from server: ");
     System.out.println(packet.message());
-    try {
-      connection.close();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+    connection.close();
   }
 
   public void handle(ChatPacket packet) {

@@ -16,36 +16,24 @@ public class ServerLoginPacketRegistry extends PacketRegistry {
   }
 
   public void handle(HandshakePacket packet) {
-    try {
-      if (TestServer.namedConnections.containsKey(packet.username())) {
-        try {
-          connection.send(new DisconnectPacket("Username already taken"));
-          connection.close();
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
-      } else {
-        connection.send(new LoginSuccessPacket(256));
-        connection.setRegistry(new ServerPlayPacketRegistry(connection));
-        TestServer.connections.add(connection);
-        TestServer.namedConnections.put(packet.username(), connection);
-        System.out.println("User " +
-          packet.username() +
-          " connected from " +
-          connection.getSocket().getInetAddress().getHostAddress() +
-          ":" +
-          connection.getSocket().getPort());
+    if (TestServer.namedConnections.containsKey(packet.username())) {
+      connection.send(new DisconnectPacket("Username already taken"));
+      connection.close();
+    } else {
+      connection.send(new LoginSuccessPacket(256));
+      connection.setRegistry(new ServerPlayPacketRegistry(connection));
+      TestServer.connections.add(connection);
+      TestServer.namedConnections.put(packet.username(), connection);
+      System.out.println("User " +
+        packet.username() +
+        " connected from " +
+        connection.getSocket().getInetAddress().getHostAddress() +
+        ":" +
+        connection.getSocket().getPort());
 
-        TestServer.namedConnections.values().forEach(conn -> {
-          try {
-            conn.send(new ChatPacket("User " + packet.username() + " has joined the server"));
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-        });
-      }
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+      TestServer.namedConnections.values().forEach(conn -> {
+        conn.send(new ChatPacket("User " + packet.username() + " has joined the server"));
+      });
     }
   }
 

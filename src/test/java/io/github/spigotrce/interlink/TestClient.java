@@ -44,18 +44,14 @@ public class TestClient {
 
   public static void onConnect(Connection connection) {
     connection.setRegistry(new ClientLoginPacketRegistry(connection));
-    try {
-      connection.send(new HandshakePacket(input("Enter username: ")));
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    connection.send(new HandshakePacket(input("Enter username: ")));
   }
 
   public static void onDisconnect(Connection connection) {
     System.out.println("Disconnected from server!");
   }
 
-  public static void onException(Throwable throwable) {
+  public static void onException(Connection connection, Throwable throwable) {
     throwable.printStackTrace();
   }
 

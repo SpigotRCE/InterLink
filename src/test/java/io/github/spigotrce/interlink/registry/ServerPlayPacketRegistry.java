@@ -17,18 +17,15 @@ public class ServerPlayPacketRegistry extends PacketRegistry {
   }
 
   public void handle(DisconnectPacket packet) {
-    try {
-      connection.close();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    connection.close();
   }
 
   public void handle(ChatPacket packet) {
     String username = "";
     for (Connection namedConnection : TestServer.namedConnections.values()) {
       if (namedConnection == connection) {
-        username = TestServer.namedConnections.entrySet().stream()
+        username = TestServer.namedConnections.entrySet()
+          .stream()
           .filter(entry -> entry.getValue() == connection)
           .map(Map.Entry::getKey)
           .findFirst()
@@ -41,11 +38,7 @@ public class ServerPlayPacketRegistry extends PacketRegistry {
     System.out.println(message);
 
     TestServer.namedConnections.values().forEach(conn -> {
-      try {
-        conn.send(new ChatPacket(message));
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
+      conn.send(new ChatPacket(message));
     });
   }
 }
