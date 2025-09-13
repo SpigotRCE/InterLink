@@ -33,13 +33,10 @@ public class TestServer {
 
   public static void onException(Connection connection, Throwable throwable) {
     throwable.printStackTrace();
-    try {
-      if (!connection.getSocket().isClosed()) {
-        connection.send(new DisconnectPacket("Exception: " + throwable.getMessage()));
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
+    if (!connection.getSocket().isClosed()) {
+      connection.send(new DisconnectPacket("Exception: " + throwable.getMessage()));
     }
+
 
     connections.remove(connection);
   }

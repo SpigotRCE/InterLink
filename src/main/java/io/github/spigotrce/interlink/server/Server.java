@@ -43,26 +43,16 @@ public class Server {
 
       while (true) {
         Socket clientSocket = serverSocket.accept();
-        Connection connection = new Connection(clientSocket, key, iv);
+        Connection connection = new Connection(clientSocket, key, iv, onException);
         connections.add(connection);
         onConnect.accept(connection);
 
         new Thread(() -> {
-          try {
-            while (!clientSocket.isClosed()) {
-              Packet<?> packet = connection.read();
-              connection.getRegistry().handle(packet);
-            }
-          } catch (Exception e) {
-            onException.accept(connection, e);
-          } finally {
-            try {
-              connections.remove(connection);
-              clientSocket.close();
-            } catch (Exception ignored) {
-            }
-            onDisconnect.accept(connection);
+          while (!clientSocket.isClosed()) {
+            Packet<?> packet = connection.read();
+            connection.getRegistry().handle(packet);
           }
+
         }).start();
       }
     }

@@ -9,6 +9,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.net.Socket;
+import java.util.function.*;
 
 public class Connection {
   private final Socket socket;
@@ -18,14 +19,17 @@ public class Connection {
   private final Cipher encryptCipher;
   private final Cipher decryptCipher;
 
+  private final BiConsumer<Connection, Throwable> onException;
+
   private PacketRegistry registry;
   private int compressionThreshold = 0;
 
-  public Connection(Socket socket, byte[] key, byte[] iv)
+  public Connection(Socket socket, byte[] key, byte[] iv, BiConsumer<Connection, Throwable> onException)
     throws Exception {
     this.socket = socket;
     this.output = new DataOutputStream(socket.getOutputStream());
     this.input = new DataInputStream(socket.getInputStream());
+    this.onException = onException;
 
     SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
     IvParameterSpec ivSpec = new IvParameterSpec(iv);
@@ -37,50 +41,59 @@ public class Connection {
     decryptCipher.init(Cipher.DECRYPT_MODE, keySpec, ivSpec);
   }
 
-  public void send(Packet<?> packet) throws Exception {
-    OutputBuffer out = OutputBuffer.create();
-    int id = registry.getId(packet);
-    if (id == -1) {
-      throw new IOException("Unregistered packet: " + packet.getClass());
+  public void send(Packet<?> packet) {
+    try {
+      OutputBuffer out = OutputBuffer.create();
+      int id = registry.getId(packet);
+      if (id == -1) {
+        throw new IOException("Unregistered packet: " + packet.getClass());
+      }
+
+      out.writeInt(id);
+      registry.encode(packet, out);
+
+      byte[] data = out.toByteArray();
+
+      boolean compressed = data.length >= compressionThreshold && compressionThreshold != 0;
+      if (compressed) {
+        data = ZLibCompressor.compress(data);
+      }
+
+      data = encryptCipher.doFinal(data);
+
+      // [compressed flag][length][data]
+      output.writeBoolean(compressed);
+      output.writeInt(data.length);
+      output.write(data);
+      output.flush();
+    } catch (Exception e) {
+      onException.accept(this, e);
     }
-
-    out.writeInt(id);
-    registry.encode(packet, out);
-
-    byte[] data = out.toByteArray();
-
-    boolean compressed = data.length >= compressionThreshold && compressionThreshold != 0;
-    if (compressed) {
-      data = ZLibCompressor.compress(data);
-    }
-
-    data = encryptCipher.doFinal(data);
-
-    // [compressed flag][length][data]
-    output.writeBoolean(compressed);
-    output.writeInt(data.length);
-    output.write(data);
-    output.flush();
   }
 
-  public Packet<?> read() throws Exception {
-    // [compressed flag][length][data]
-    boolean compressed = input.readBoolean();
-    int length = input.readInt();
+  public Packet<?> read() {
+    try {
+      // [compressed flag][length][data]
+      boolean compressed = input.readBoolean();
+      int length = input.readInt();
 
-    byte[] data = new byte[length];
-    input.readFully(data);
+      byte[] data = new byte[length];
+      input.readFully(data);
 
-    data = decryptCipher.doFinal(data);
+      data = decryptCipher.doFinal(data);
 
 
-    if (compressed) {
-      data = ZLibCompressor.decompress(data);
+      if (compressed) {
+        data = ZLibCompressor.decompress(data);
+      }
+
+      InputBuffer in = InputBuffer.create(data);
+      int id = in.readInt();
+      return registry.decode(id, in);
+    } catch (Exception e) {
+      onException.accept(this, e);
+      return null;
     }
-
-    InputBuffer in = InputBuffer.create(data);
-    int id = in.readInt();
-    return registry.decode(id, in);
   }
 
   public Socket getSocket() {
@@ -119,9 +132,17 @@ public class Connection {
     this.compressionThreshold = compressionThreshold;
   }
 
-  public void close() throws IOException {
-    input.close();
-    output.close();
-    socket.close();
+  public BiConsumer<Connection, Throwable> getOnException() {
+    return onException;
+  }
+
+  public void close() {
+    try {
+      input.close();
+      output.close();
+      socket.close();
+    } catch (IOException e) {
+      onException.accept(this, e);
+    }
   }
 }
