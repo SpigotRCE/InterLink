@@ -8,7 +8,7 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
-import java.net.Socket;
+import java.net.*;
 import java.util.function.*;
 
 public class Connection {
@@ -23,6 +23,8 @@ public class Connection {
 
   private PacketRegistry registry;
   private int compressionThreshold = 0;
+
+  private boolean disconnected = false;
 
   public Connection(Socket socket, byte[] key, byte[] iv, BiConsumer<Connection, Throwable> onException)
     throws Exception {
@@ -90,6 +92,11 @@ public class Connection {
       InputBuffer in = InputBuffer.create(data);
       int id = in.readInt();
       return registry.decode(id, in);
+    } catch (EOFException | SocketException e) {
+      if (!disconnected) {
+        onException.accept(this, e);
+      }
+      return null;
     } catch (Exception e) {
       onException.accept(this, e);
       return null;
@@ -136,11 +143,20 @@ public class Connection {
     return onException;
   }
 
+  public boolean isDisconnected() {
+    return disconnected;
+  }
+
+  public void setDisconnected(boolean disconnected) {
+    this.disconnected = disconnected;
+  }
+
   public void close() {
     try {
       input.close();
       output.close();
       socket.close();
+      disconnected = true;
     } catch (IOException e) {
       onException.accept(this, e);
     }
