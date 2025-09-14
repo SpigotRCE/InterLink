@@ -41,6 +41,12 @@ public class Client {
     new Thread(() -> {
       while (true) {
         Packet<?> packet = connection.read();
+        if (packet == null) {
+          if (!connection.isDisconnected()) {
+            disconnect();
+          }
+          break;
+        }
         connection.getRegistry().handle(packet);
       }
     }, "Client-Receiver").start();
