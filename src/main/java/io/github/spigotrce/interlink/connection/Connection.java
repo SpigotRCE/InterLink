@@ -156,9 +156,9 @@ public class Connection {
       input.close();
       output.close();
       socket.close();
-      disconnected = true;
     } catch (IOException e) {
       onException.accept(this, e);
     }
+    disconnected = true;
   }
 }
