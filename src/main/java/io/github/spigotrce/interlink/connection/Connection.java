@@ -44,6 +44,7 @@ public class Connection {
   }
 
   public void send(Packet<?> packet) {
+    if(this.disconnected) return;
     try {
       OutputBuffer out = OutputBuffer.create();
       int id = registry.getId(packet);
@@ -74,6 +75,7 @@ public class Connection {
   }
 
   public Packet<?> read() {
+    if(this.disconnected) return null;
     try {
       // [compressed flag][length][data]
       boolean compressed = input.readBoolean();
