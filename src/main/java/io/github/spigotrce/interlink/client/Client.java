@@ -19,6 +19,8 @@ public class Client {
 
   private Connection connection;
 
+  public boolean lock;
+
   public Client(String host, int port,
     byte[] key,
     byte[] iv,
@@ -31,15 +33,20 @@ public class Client {
     this.onConnect = onConnect;
     this.onDisconnect = onDisconnect;
     this.onException = onException;
+    this.lock = false;
   }
 
   public void connect() throws Exception {
+    if(this.lock) return;
+
     Socket socket = new Socket(host, port);
     connection = new Connection(socket, key, iv, onException);
     onConnect.accept(connection);
 
+    this.lock = true;
+
     new Thread(() -> {
-      while (true) {
+      while (this.lock) {
         Packet<?> packet = connection.read();
         if (packet == null) {
           if (!connection.isDisconnected()) {
@@ -53,9 +60,11 @@ public class Client {
   }
 
   public void disconnect() {
+    if(!this.lock) return;
     if (connection != null) {
       connection.close();
       onDisconnect.accept(connection);
+      this.lock = false;
     }
   }
 
