@@ -22,6 +22,8 @@ public class Server {
 
   private final List<Connection> connections = Collections.synchronizedList(new ArrayList<>());
 
+  public boolean lock;
+
   public Server(String host, int port,
     byte[] key,
     byte[] iv,
@@ -38,17 +40,18 @@ public class Server {
   }
 
   public void start() throws Exception {
+    this.lock = true;
     try (ServerSocket serverSocket = new ServerSocket()) {
       serverSocket.bind(new InetSocketAddress(host, port));
 
-      while (true) {
+      while (this.lock) {
         Socket clientSocket = serverSocket.accept();
         Connection connection = new Connection(clientSocket, key, iv, onException);
         connections.add(connection);
         onConnect.accept(connection);
 
         new Thread(() -> {
-          while (!clientSocket.isClosed()) {
+          while (!clientSocket.isClosed() && this.lock) {
             Packet<?> packet = connection.read();
             connection.getRegistry().handle(packet);
           }
