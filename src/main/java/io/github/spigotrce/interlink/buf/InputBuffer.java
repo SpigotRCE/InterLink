@@ -2,7 +2,7 @@ package io.github.spigotrce.interlink.buf;
 
 import com.google.common.io.ByteArrayDataInput;
 import io.github.spigotrce.interlink.packet.*;
-import org.jspecify.annotations.*;
+import org.jspecify.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;

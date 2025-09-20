@@ -4,9 +4,7 @@ import io.github.spigotrce.interlink.connection.Connection;
 import io.github.spigotrce.interlink.packet.Packet;
 
 import java.net.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.*;
 
 public class Server {
@@ -24,7 +22,8 @@ public class Server {
 
   public boolean lock;
 
-  public Server(String host, int port,
+  public Server(String host,
+    int port,
     byte[] key,
     byte[] iv,
     Consumer<Connection> onConnect,
