@@ -64,7 +64,7 @@ public class Connection {
 
       data = encryptCipher.doFinal(data);
 
-      // [compressed flag][length][data]
+      // [compressed flag][length][(compressed) id + data]
       output.writeBoolean(compressed);
       output.writeInt(data.length);
       output.write(data);
@@ -77,7 +77,7 @@ public class Connection {
   public Packet<?> read() {
     if(this.disconnected) return null;
     try {
-      // [compressed flag][length][data]
+      // [compressed flag][length][(compressed) id + data]
       boolean compressed = input.readBoolean();
       int length = input.readInt();
 
@@ -85,7 +85,6 @@ public class Connection {
       input.readFully(data);
 
       data = decryptCipher.doFinal(data);
-
 
       if (compressed) {
         data = ZLibCompressor.decompress(data);
