@@ -60,9 +60,9 @@ public class OutputBuffer implements ByteArrayDataOutput {
     }
   }
 
-  public void writeBytes(String s) {
+  public void writeShort(int v) {
     try {
-      this.output.writeBytes(s);
+      this.output.writeShort(v);
     } catch (IOException impossible) {
       throw new AssertionError(impossible);
     }
@@ -71,30 +71,6 @@ public class OutputBuffer implements ByteArrayDataOutput {
   public void writeChar(int v) {
     try {
       this.output.writeChar(v);
-    } catch (IOException impossible) {
-      throw new AssertionError(impossible);
-    }
-  }
-
-  public void writeChars(String s) {
-    try {
-      this.output.writeChars(s);
-    } catch (IOException impossible) {
-      throw new AssertionError(impossible);
-    }
-  }
-
-  public void writeDouble(double v) {
-    try {
-      this.output.writeDouble(v);
-    } catch (IOException impossible) {
-      throw new AssertionError(impossible);
-    }
-  }
-
-  public void writeFloat(float v) {
-    try {
-      this.output.writeFloat(v);
     } catch (IOException impossible) {
       throw new AssertionError(impossible);
     }
@@ -116,9 +92,25 @@ public class OutputBuffer implements ByteArrayDataOutput {
     }
   }
 
-  public void writeShort(int v) {
+  public void writeFloat(float v) {
     try {
-      this.output.writeShort(v);
+      this.output.writeFloat(v);
+    } catch (IOException impossible) {
+      throw new AssertionError(impossible);
+    }
+  }
+
+  public void writeDouble(double v) {
+    try {
+      this.output.writeDouble(v);
+    } catch (IOException impossible) {
+      throw new AssertionError(impossible);
+    }
+  }
+
+  public void writeChars(String s) {
+    try {
+      this.output.writeChars(s);
     } catch (IOException impossible) {
       throw new AssertionError(impossible);
     }
@@ -132,12 +124,24 @@ public class OutputBuffer implements ByteArrayDataOutput {
     }
   }
 
+  public void writeBytes(String s) {
+    try {
+      this.output.writeBytes(s);
+    } catch (IOException impossible) {
+      throw new AssertionError(impossible);
+    }
+  }
+
+  public byte[] toByteArray() {
+    return this.byteArrayOutputStream.toByteArray();
+  }
+
   public void writeEnumConstant(Enum<?> instance) {
     writeInt(instance.ordinal());
   }
 
   public void writePacket(Packet<?> packet) {
-    @SuppressWarnings("unchecked") PacketCodec<Packet<?>> codec =(PacketCodec<Packet<?>>) packet.getCodec();
+    @SuppressWarnings("unchecked") PacketCodec<Packet<?>> codec = (PacketCodec<Packet<?>>) packet.getCodec();
     codec.write(packet, this);
   }
 
@@ -169,9 +173,5 @@ public class OutputBuffer implements ByteArrayDataOutput {
       this.writeBoolean(true);
       writer.accept(this, value);
     }
-  }
-
-  public byte[] toByteArray() {
-    return this.byteArrayOutputStream.toByteArray();
   }
 }

@@ -6,9 +6,8 @@ import java.util.*;
 import java.util.function.Consumer;
 
 /**
- * A packet registry holds all packets for the current phase of the network.
- * A packet registry should be the same for both sides of a connection but can have different handlers.
- * A packet handler can have
+ * A packet registry holds all packets for the current phase of the network. A packet registry should be the same for
+ * both sides of a connection but can have different handlers. A packet handler can have
  */
 public class PacketRegistry {
   public final List<PacketEntry<? extends Packet<?>>> packets = new ArrayList<>();

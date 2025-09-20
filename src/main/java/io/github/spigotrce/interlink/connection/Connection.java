@@ -5,11 +5,10 @@ import io.github.spigotrce.interlink.compression.ZLibCompressor;
 import io.github.spigotrce.interlink.packet.*;
 
 import javax.crypto.Cipher;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
+import javax.crypto.spec.*;
 import java.io.*;
 import java.net.*;
-import java.util.function.*;
+import java.util.function.BiConsumer;
 
 public class Connection {
   private final Socket socket;
@@ -44,7 +43,9 @@ public class Connection {
   }
 
   public void send(Packet<?> packet) {
-    if(this.disconnected) return;
+    if (this.disconnected) {
+      return;
+    }
     try {
       OutputBuffer out = OutputBuffer.create();
       int id = registry.getId(packet);
@@ -75,7 +76,9 @@ public class Connection {
   }
 
   public Packet<?> read() {
-    if(this.disconnected) return null;
+    if (this.disconnected) {
+      return null;
+    }
     try {
       // [compressed flag][length][(compressed) id + data]
       boolean compressed = input.readBoolean();
