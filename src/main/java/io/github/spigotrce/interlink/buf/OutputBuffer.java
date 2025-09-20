@@ -162,6 +162,15 @@ public class OutputBuffer implements ByteArrayDataOutput {
     this.writeLong(uuid.getLeastSignificantBits());
   }
 
+  public <T> void writeNullable(T value, BiConsumer<OutputBuffer, T> writer) {
+    if (value == null) {
+      this.writeBoolean(false);
+    } else {
+      this.writeBoolean(true);
+      writer.accept(this, value);
+    }
+  }
+
   public byte[] toByteArray() {
     return this.byteArrayOutputStream.toByteArray();
   }
