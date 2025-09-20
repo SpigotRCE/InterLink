@@ -11,8 +11,8 @@ public class ServerLoginPacketRegistry extends PacketRegistry {
     this.connection = connection;
 
     registerPacket(HandshakePacket.class, HandshakePacket.CODEC, this::handle);
-    registerPacket(DisconnectPacket.class, DisconnectPacket.CODEC, this::handle);
-    registerPacket(LoginSuccessPacket.class, LoginSuccessPacket.CODEC, this::handle);
+    registerPacket(DisconnectPacket.class, DisconnectPacket.CODEC);
+    registerPacket(LoginSuccessPacket.class, LoginSuccessPacket.CODEC);
   }
 
   public void handle(HandshakePacket packet) {
@@ -35,13 +35,5 @@ public class ServerLoginPacketRegistry extends PacketRegistry {
         conn.send(new ChatPacket("User " + packet.username() + " has joined the server"));
       });
     }
-  }
-
-  public void handle(DisconnectPacket packet) {
-    throw new IllegalArgumentException("Cannot handle DisconnectPacket in ServerLogin state");
-  }
-
-  public void handle(LoginSuccessPacket packet) {
-    throw new IllegalArgumentException("Cannot handle LoginSuccessPacket in ServerLogin state");
   }
 }

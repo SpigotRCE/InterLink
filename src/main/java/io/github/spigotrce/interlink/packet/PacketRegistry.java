@@ -5,11 +5,22 @@ import io.github.spigotrce.interlink.buf.*;
 import java.util.*;
 import java.util.function.Consumer;
 
+/**
+ * A packet registry holds all packets for the current phase of the network.
+ * A packet registry should be the same for both sides of a connection but can have different handlers.
+ * A packet handler can have
+ */
 public class PacketRegistry {
   public final List<PacketEntry<? extends Packet<?>>> packets = new ArrayList<>();
 
   public <T extends Packet<?>> void registerPacket(Class<T> packetClass, PacketCodec<T> codec, Consumer<T> handler) {
     packets.add(new PacketEntry<>(packetClass, codec, handler));
+  }
+
+  public <T extends Packet<?>> void registerPacket(Class<T> packetClass, PacketCodec<T> codec) {
+    packets.add(new PacketEntry<>(packetClass, codec, (packet) -> {
+      throw new IllegalArgumentException("No handler registered for packet: " + packetClass.getName());
+    }));
   }
 
   public void encode(Packet<?> packet, OutputBuffer out) {

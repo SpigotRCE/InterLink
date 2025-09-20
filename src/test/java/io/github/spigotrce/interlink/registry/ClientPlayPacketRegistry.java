@@ -3,8 +3,6 @@ package io.github.spigotrce.interlink.registry;
 import io.github.spigotrce.interlink.connection.Connection;
 import io.github.spigotrce.interlink.packet.*;
 
-import java.io.IOException;
-
 public class ClientPlayPacketRegistry extends PacketRegistry {
   public final Connection connection;
 
