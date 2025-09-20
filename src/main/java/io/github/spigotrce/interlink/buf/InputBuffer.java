@@ -170,4 +170,8 @@ public class InputBuffer implements ByteArrayDataInput {
   public UUID readUUID() {
     return new UUID(this.readLong(), this.readLong());
   }
+
+  public <T> T readNullable(Function<InputBuffer, T> reader) {
+    return readBoolean() ? reader.apply(this) : null;
+  }
 }
