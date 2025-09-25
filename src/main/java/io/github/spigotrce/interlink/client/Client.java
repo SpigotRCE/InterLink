@@ -1,6 +1,6 @@
 package io.github.spigotrce.interlink.client;
 
-import io.github.spigotrce.interlink.connection.Connection;
+import io.github.spigotrce.interlink.connection.*;
 import io.github.spigotrce.interlink.packet.Packet;
 
 import java.net.Socket;
@@ -13,19 +13,19 @@ public class Client {
   private final byte[] key;
   private final byte[] iv;
 
-  private final Consumer<Connection> onConnect;
-  private final Consumer<Connection> onDisconnect;
-  private final BiConsumer<Connection, Throwable> onException;
+  private final Consumer<Connection<TcpTransport>> onConnect;
+  private final Consumer<Connection<TcpTransport>> onDisconnect;
+  private final BiConsumer<Connection<TcpTransport>, Throwable> onException;
   public boolean lock;
-  private Connection connection;
+  private Connection<TcpTransport> connection;
 
   public Client(String host,
     int port,
     byte[] key,
     byte[] iv,
-    Consumer<Connection> onConnect,
-    Consumer<Connection> onDisconnect,
-    BiConsumer<Connection, Throwable> onException) {
+    Consumer<Connection<TcpTransport>> onConnect,
+    Consumer<Connection<TcpTransport>> onDisconnect,
+    BiConsumer<Connection<TcpTransport>, Throwable> onException) {
     this.host = host;
     this.port = port;
     this.key = key;
@@ -42,7 +42,7 @@ public class Client {
     }
 
     Socket socket = new Socket(host, port);
-    connection = new Connection(socket, key, iv, onException);
+    connection = new Connection<TcpTransport>(new TcpTransport(socket), key, iv, onException);
     onConnect.accept(connection);
 
     this.lock = true;
@@ -88,23 +88,23 @@ public class Client {
     return iv;
   }
 
-  public Consumer<Connection> getOnConnect() {
+  public Consumer<Connection<TcpTransport>> getOnConnect() {
     return onConnect;
   }
 
-  public Consumer<Connection> getOnDisconnect() {
+  public Consumer<Connection<TcpTransport>> getOnDisconnect() {
     return onDisconnect;
   }
 
-  public BiConsumer<Connection, Throwable> getOnException() {
+  public BiConsumer<Connection<TcpTransport>, Throwable> getOnException() {
     return onException;
   }
 
-  public Connection getConnection() {
+  public Connection<TcpTransport> getConnection() {
     return connection;
   }
 
-  public void setConnection(Connection connection) {
+  public void setConnection(Connection<TcpTransport> connection) {
     this.connection = connection;
   }
 }

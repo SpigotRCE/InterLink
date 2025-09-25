@@ -1,6 +1,6 @@
 package io.github.spigotrce.interlink.server;
 
-import io.github.spigotrce.interlink.connection.Connection;
+import io.github.spigotrce.interlink.connection.*;
 import io.github.spigotrce.interlink.packet.Packet;
 
 import java.net.*;
@@ -14,11 +14,11 @@ public class Server {
   private final byte[] key;
   private final byte[] iv;
 
-  private final Consumer<Connection> onConnect;
-  private final Consumer<Connection> onDisconnect;
-  private final BiConsumer<Connection, Throwable> onException;
+  private final Consumer<Connection<TcpTransport>> onConnect;
+  private final Consumer<Connection<TcpTransport>> onDisconnect;
+  private final BiConsumer<Connection<TcpTransport>, Throwable> onException;
 
-  private final List<Connection> connections = Collections.synchronizedList(new ArrayList<>());
+  private final List<Connection<TcpTransport>> connections = Collections.synchronizedList(new ArrayList<>());
 
   public boolean lock;
 
@@ -26,9 +26,9 @@ public class Server {
     int port,
     byte[] key,
     byte[] iv,
-    Consumer<Connection> onConnect,
-    Consumer<Connection> onDisconnect,
-    BiConsumer<Connection, Throwable> onException) {
+    Consumer<Connection<TcpTransport>> onConnect,
+    Consumer<Connection<TcpTransport>> onDisconnect,
+    BiConsumer<Connection<TcpTransport>, Throwable> onException) {
     this.host = host;
     this.port = port;
     this.key = key;
@@ -45,7 +45,7 @@ public class Server {
 
       while (this.lock) {
         Socket clientSocket = serverSocket.accept();
-        Connection connection = new Connection(clientSocket, key, iv, onException);
+        Connection<TcpTransport> connection = new Connection<TcpTransport>(new TcpTransport(clientSocket), key, iv, onException);
         connections.add(connection);
         onConnect.accept(connection);
 
@@ -76,19 +76,19 @@ public class Server {
     return iv;
   }
 
-  public Consumer<Connection> getOnConnect() {
+  public Consumer<Connection<TcpTransport>> getOnConnect() {
     return onConnect;
   }
 
-  public Consumer<Connection> getOnDisconnect() {
+  public Consumer<Connection<TcpTransport>> getOnDisconnect() {
     return onDisconnect;
   }
 
-  public BiConsumer<Connection, Throwable> getOnException() {
+  public BiConsumer<Connection<TcpTransport>, Throwable> getOnException() {
     return onException;
   }
 
-  public List<Connection> getConnections() {
+  public List<Connection<TcpTransport>> getConnections() {
     return connections;
   }
 }

@@ -1,7 +1,7 @@
 package io.github.spigotrce.interlink;
 
 import io.github.spigotrce.interlink.client.Client;
-import io.github.spigotrce.interlink.connection.Connection;
+import io.github.spigotrce.interlink.connection.*;
 import io.github.spigotrce.interlink.packet.*;
 import io.github.spigotrce.interlink.registry.ClientLoginPacketRegistry;
 
@@ -42,16 +42,16 @@ public class TestClient {
     }
   }
 
-  public static void onConnect(Connection connection) {
+  public static void onConnect(Connection<TcpTransport> connection) {
     connection.setRegistry(new ClientLoginPacketRegistry(connection));
     connection.send(new HandshakePacket(input("Enter username: ")));
   }
 
-  public static void onDisconnect(Connection connection) {
+  public static void onDisconnect(Connection<TcpTransport> connection) {
     System.out.println("Disconnected from server!");
   }
 
-  public static void onException(Connection connection, Throwable throwable) {
+  public static void onException(Connection<TcpTransport> connection, Throwable throwable) {
     throwable.printStackTrace();
   }
 
