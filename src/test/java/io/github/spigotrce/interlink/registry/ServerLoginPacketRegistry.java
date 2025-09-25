@@ -1,13 +1,13 @@
 package io.github.spigotrce.interlink.registry;
 
 import io.github.spigotrce.interlink.TestServer;
-import io.github.spigotrce.interlink.connection.Connection;
+import io.github.spigotrce.interlink.connection.*;
 import io.github.spigotrce.interlink.packet.*;
 
 public class ServerLoginPacketRegistry extends PacketRegistry {
-  public final Connection connection;
+  public final Connection<TcpTransport> connection;
 
-  public ServerLoginPacketRegistry(Connection connection) {
+  public ServerLoginPacketRegistry(Connection<TcpTransport> connection) {
     this.connection = connection;
 
     registerPacket(HandshakePacket.class, HandshakePacket.CODEC, this::handle);
@@ -27,9 +27,9 @@ public class ServerLoginPacketRegistry extends PacketRegistry {
       System.out.println("User " +
         packet.username() +
         " connected from " +
-        connection.getSocket().getInetAddress().getHostAddress() +
+        connection.getTransport().getSocket().getInetAddress().getHostAddress() +
         ":" +
-        connection.getSocket().getPort());
+        connection.getTransport().getSocket().getPort());
 
       TestServer.namedConnections.values().forEach(conn -> {
         conn.send(new ChatPacket("User " + packet.username() + " has joined the server"));

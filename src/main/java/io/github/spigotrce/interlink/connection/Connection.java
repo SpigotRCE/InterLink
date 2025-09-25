@@ -7,29 +7,24 @@ import io.github.spigotrce.interlink.packet.*;
 import javax.crypto.Cipher;
 import javax.crypto.spec.*;
 import java.io.*;
-import java.net.*;
 import java.util.function.BiConsumer;
 
-public class Connection {
-  private final Socket socket;
-  private final DataOutputStream output;
-  private final DataInputStream input;
-
+public class Connection<T extends Transport> {
+  private final T transport;
   private final Cipher encryptCipher;
   private final Cipher decryptCipher;
-
-  private final BiConsumer<Connection, Throwable> onException;
+  private final BiConsumer<Connection<T>, Throwable> onException;
 
   private PacketRegistry registry;
   private int compressionThreshold = 0;
-
   private boolean disconnected = false;
 
-  public Connection(Socket socket, byte[] key, byte[] iv, BiConsumer<Connection, Throwable> onException)
-    throws Exception {
-    this.socket = socket;
-    this.output = new DataOutputStream(socket.getOutputStream());
-    this.input = new DataInputStream(socket.getInputStream());
+  public Connection(
+    T transport,
+    byte[] key, byte[] iv,
+    BiConsumer<Connection<T>, Throwable> onException
+  ) throws Exception {
+    this.transport = transport;
     this.onException = onException;
 
     SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
@@ -43,80 +38,60 @@ public class Connection {
   }
 
   public void send(Packet<?> packet) {
-    if (this.disconnected) {
-      return;
-    }
+    if (disconnected) return;
     try {
       OutputBuffer out = OutputBuffer.create();
       int id = registry.getId(packet);
       if (id == -1) {
         throw new IOException("Unregistered packet: " + packet.getClass());
       }
-
       out.writeInt(id);
       registry.encode(packet, out);
 
       byte[] data = out.toByteArray();
-
-      boolean compressed = data.length >= compressionThreshold && compressionThreshold != 0;
-      if (compressed) {
-        data = ZLibCompressor.compress(data);
-      }
+      boolean compressed = data.length >= compressionThreshold && compressionThreshold > 0;
+      if (compressed) data = ZLibCompressor.compress(data);
 
       data = encryptCipher.doFinal(data);
 
-      // [compressed flag][length][(compressed) id + data]
-      output.writeBoolean(compressed);
-      output.writeInt(data.length);
-      output.write(data);
-      output.flush();
+      // prepend metadata
+      ByteArrayOutputStream meta = new ByteArrayOutputStream();
+      DataOutputStream metaOut = new DataOutputStream(meta);
+      metaOut.writeBoolean(compressed);
+      metaOut.writeInt(data.length);
+      metaOut.write(data);
+
+      transport.send(meta.toByteArray());
     } catch (Exception e) {
       onException.accept(this, e);
     }
   }
 
   public Packet<?> read() {
-    if (this.disconnected) {
-      return null;
-    }
+    if (disconnected) return null;
     try {
-      // [compressed flag][length][(compressed) id + data]
-      boolean compressed = input.readBoolean();
-      int length = input.readInt();
+      byte[] frame = transport.receive();
+      DataInputStream metaIn = new DataInputStream(new ByteArrayInputStream(frame));
+      boolean compressed = metaIn.readBoolean();
+      int length = metaIn.readInt();
 
       byte[] data = new byte[length];
-      input.readFully(data);
+      metaIn.readFully(data);
 
       data = decryptCipher.doFinal(data);
-
-      if (compressed) {
-        data = ZLibCompressor.decompress(data);
-      }
+      if (compressed) data = ZLibCompressor.decompress(data);
 
       InputBuffer in = InputBuffer.create(data);
       int id = in.readInt();
       return registry.decode(id, in);
-    } catch (EOFException | SocketException e) {
-      if (!disconnected) {
-        onException.accept(this, e);
-      }
-      return null;
     } catch (Exception e) {
       onException.accept(this, e);
       return null;
     }
   }
 
-  public Socket getSocket() {
-    return socket;
-  }
-
-  public DataOutputStream getOutput() {
-    return output;
-  }
-
-  public DataInputStream getInput() {
-    return input;
+  public T getTransport() {
+    return transport;
   }
 
   public Cipher getEncryptCipher() {
@@ -143,7 +118,7 @@ public class Connection {
     this.compressionThreshold = compressionThreshold;
   }
 
-  public BiConsumer<Connection, Throwable> getOnException() {
+  public BiConsumer<Connection<T>, Throwable> getOnException() {
     return onException;
   }
 
@@ -157,9 +132,7 @@ public class Connection {
 
   public void close() {
     try {
-      input.close();
-      output.close();
-      socket.close();
+      transport.close();
     } catch (IOException e) {
       onException.accept(this, e);
     }
