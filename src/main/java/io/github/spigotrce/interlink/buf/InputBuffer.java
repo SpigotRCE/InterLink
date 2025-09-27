@@ -145,8 +145,7 @@ public class InputBuffer implements ByteArrayDataInput {
     return enumClass.getEnumConstants()[this.readInt()];
   }
 
-  public <T extends Packet<?>> T readData(Packet<T> packet) {
-    PacketCodec<T> codec = packet.getCodec();
+  public <T extends Packet<?>> T readNestedPacket(PacketCodec<T> codec) {
     return codec.read(this);
   }
 
