@@ -132,15 +132,11 @@ public class OutputBuffer implements ByteArrayDataOutput {
     }
   }
 
-  public byte[] toByteArray() {
-    return this.byteArrayOutputStream.toByteArray();
-  }
-
   public void writeEnumConstant(Enum<?> instance) {
     writeInt(instance.ordinal());
   }
 
-  public void writePacket(Packet<?> packet) {
+  public void writeNestedPacket(Packet<?> packet) {
     @SuppressWarnings("unchecked") PacketCodec<Packet<?>> codec = (PacketCodec<Packet<?>>) packet.getCodec();
     codec.write(packet, this);
   }
@@ -173,5 +169,9 @@ public class OutputBuffer implements ByteArrayDataOutput {
       this.writeBoolean(true);
       writer.accept(this, value);
     }
+  }
+
+  public byte[] toByteArray() {
+    return this.byteArrayOutputStream.toByteArray();
   }
 }
