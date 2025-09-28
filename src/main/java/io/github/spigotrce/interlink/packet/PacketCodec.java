@@ -4,6 +4,13 @@ import io.github.spigotrce.interlink.buf.*;
 
 import java.util.function.*;
 
+/**
+ * A Packet codec which is used to parse reader and writer methods.
+ *
+ * @param <T> Type of the packet
+ *
+ * @author SpigotRCE
+ */
 public class PacketCodec<T> {
   private final Function<InputBuffer, T> reader;
   private final BiConsumer<T, OutputBuffer> writer;
