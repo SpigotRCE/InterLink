@@ -3,6 +3,11 @@ package io.github.spigotrce.interlink.compression;
 import java.io.*;
 import java.util.zip.*;
 
+/**
+ * ZLibCompressor for compressing the data.
+ *
+ * @author SpigotRCE
+ */
 public class ZLibCompressor {
   public static byte[] compress(byte[] data) throws IOException {
     Deflater deflater = new Deflater(Deflater.DEFAULT_COMPRESSION);

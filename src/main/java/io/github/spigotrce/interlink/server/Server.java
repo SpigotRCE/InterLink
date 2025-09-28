@@ -7,6 +7,11 @@ import java.net.*;
 import java.util.*;
 import java.util.function.*;
 
+/**
+ * Server using tcp transport.
+ *
+ * @author SpigotRCE
+ */
 public class Server {
   private final String host;
   private final int port;
@@ -14,10 +19,16 @@ public class Server {
   private final byte[] key;
   private final byte[] iv;
 
+  /**
+   * Consumers for events.
+   */
   private final Consumer<Connection<TcpTransport>> onConnect;
   private final Consumer<Connection<TcpTransport>> onDisconnect;
   private final BiConsumer<Connection<TcpTransport>, Throwable> onException;
 
+  /**
+   * List of connections.
+   */
   private final List<Connection<TcpTransport>> connections = Collections.synchronizedList(new ArrayList<>());
 
   public boolean lock;
