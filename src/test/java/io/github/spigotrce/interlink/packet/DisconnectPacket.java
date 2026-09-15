@@ -17,6 +17,6 @@ public record DisconnectPacket(String message) implements Packet<DisconnectPacke
 
   @Override
   public PacketCodec<DisconnectPacket> getCodec() {
-    return null;
+    return CODEC;
   }
 }

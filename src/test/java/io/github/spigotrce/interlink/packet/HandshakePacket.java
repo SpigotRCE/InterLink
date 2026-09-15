@@ -17,6 +17,6 @@ public record HandshakePacket(String username) implements Packet<HandshakePacket
 
   @Override
   public PacketCodec<HandshakePacket> getCodec() {
-    return null;
+    return CODEC;
   }
 }

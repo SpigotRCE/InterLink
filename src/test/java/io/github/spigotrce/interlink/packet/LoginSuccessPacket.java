@@ -17,6 +17,6 @@ public record LoginSuccessPacket(int compressionThreshold) implements Packet<Log
 
   @Override
   public PacketCodec<LoginSuccessPacket> getCodec() {
-    return null;
+    return CODEC;
   }
 }

@@ -17,6 +17,6 @@ public record ChatPacket(String message) implements Packet<ChatPacket> {
 
   @Override
   public PacketCodec<ChatPacket> getCodec() {
-    return null;
+    return CODEC;
   }
 }
