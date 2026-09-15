@@ -1,23 +1,23 @@
 package io.github.spigotrce.interlink.server;
 
 import io.github.spigotrce.interlink.connection.Connection;
-import io.github.spigotrce.interlink.connection.TcpTransport;
+import io.github.spigotrce.interlink.connection.Transport;
 import io.github.spigotrce.interlink.packet.Packet;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * Server using tcp transport.
  *
  * @author SpigotRCE
  */
-public class Server {
+public class Server<T extends Transport<T>> {
+  private final Supplier<T> transportFactory;
+
   private final String host;
   private final int port;
 
@@ -25,25 +25,29 @@ public class Server {
   private final byte[] iv;
 
   /** Consumers for events. */
-  private final Consumer<Connection<TcpTransport>> onConnect;
+  private final Consumer<Connection<T>> onConnect;
 
-  private final Consumer<Connection<TcpTransport>> onDisconnect;
-  private final BiConsumer<Connection<TcpTransport>, Throwable> onException;
+  private final Consumer<Connection<T>> onDisconnect;
+  private final BiConsumer<Connection<T>, Throwable> onException;
 
   /** List of connections. */
-  private final List<Connection<TcpTransport>> connections =
+  private final List<Connection<T>> connections =
       Collections.synchronizedList(new ArrayList<>());
 
   public volatile boolean lock;
 
+  private T listener;
+
   public Server(
+      final Supplier<T> transportFactory,
       final String host,
       final int port,
       final byte[] key,
       final byte[] iv,
-      final Consumer<Connection<TcpTransport>> onConnect,
-      final Consumer<Connection<TcpTransport>> onDisconnect,
-      final BiConsumer<Connection<TcpTransport>, Throwable> onException) {
+      final Consumer<Connection<T>> onConnect,
+      final Consumer<Connection<T>> onDisconnect,
+      final BiConsumer<Connection<T>, Throwable> onException) {
+    this.transportFactory = transportFactory;
     this.host = host;
     this.port = port;
     this.key = key;
@@ -55,37 +59,55 @@ public class Server {
 
   public void start() throws Exception {
     lock = true;
-    try (final ServerSocket serverSocket = new ServerSocket()) {
-      serverSocket.bind(new InetSocketAddress(host, port));
+    listener = transportFactory.get();
+    listener.bind(host, port);
 
-      while (lock) {
-        final Socket clientSocket = serverSocket.accept();
-        final Connection<TcpTransport> connection =
-            new Connection<TcpTransport>(new TcpTransport(clientSocket), key, iv, onException);
-        connections.add(connection);
-        onConnect.accept(connection);
-
-        new Thread(
-                () -> {
-                  try {
-                    while (!clientSocket.isClosed() && lock) {
-                      final Packet<?> packet = connection.read();
-                      if (packet == null) {
-                        break;
-                      }
-                      connection.getRegistry().handle(packet);
-                    }
-                  } catch (final Exception e) {
-                    onException.accept(connection, e);
-                  } finally {
-                    connections.remove(connection);
-                    connection.close();
-                    onDisconnect.accept(connection);
-                  }
-                })
-            .start();
+    while (lock) {
+      final T transport;
+      try {
+        transport = listener.accept();
+      } catch (final Exception e) {
+        if (!lock) {
+          break;
+        }
+        throw e;
       }
+
+      final Connection<T> connection = new Connection<>(transport, key, iv, onException);
+      connections.add(connection);
+      onConnect.accept(connection);
+
+      new Thread(
+              () -> {
+                try {
+                  while (transport.isOpen() && lock) {
+                    final Packet<?> packet = connection.read();
+                    if (packet == null) {
+                      break;
+                    }
+                    connection.getRegistry().handle(packet);
+                  }
+                } catch (final Exception e) {
+                  onException.accept(connection, e);
+                } finally {
+                  connections.remove(connection);
+                  connection.close();
+                  onDisconnect.accept(connection);
+                }
+              })
+          .start();
     }
+  }
+
+  public void stop() throws Exception {
+    lock = false;
+    if (listener != null) {
+      listener.close();
+    }
+  }
+
+  public Supplier<T> getTransportFactory() {
+    return transportFactory;
   }
 
   public String getHost() {
@@ -104,19 +126,19 @@ public class Server {
     return iv;
   }
 
-  public Consumer<Connection<TcpTransport>> getOnConnect() {
+  public Consumer<Connection<T>> getOnConnect() {
     return onConnect;
   }
 
-  public Consumer<Connection<TcpTransport>> getOnDisconnect() {
+  public Consumer<Connection<T>> getOnDisconnect() {
     return onDisconnect;
   }
 
-  public BiConsumer<Connection<TcpTransport>, Throwable> getOnException() {
+  public BiConsumer<Connection<T>, Throwable> getOnException() {
     return onException;
   }
 
-  public List<Connection<TcpTransport>> getConnections() {
+  public List<Connection<T>> getConnections() {
     return connections;
   }
 }

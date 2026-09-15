@@ -15,7 +15,7 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-public class Connection<T extends Transport> {
+public class Connection<T extends Transport<T>> {
   private final T transport;
   private final Cipher encryptCipher;
   private final Cipher decryptCipher;
@@ -74,6 +74,7 @@ public class Connection<T extends Transport> {
 
       transport.send(meta.toByteArray());
     } catch (final Exception e) {
+      disconnected = true;
       onException.accept(this, e);
     }
   }
@@ -100,6 +101,7 @@ public class Connection<T extends Transport> {
       final int id = in.readInt();
       return registry.decode(id, in);
     } catch (final Exception e) {
+      disconnected = true;
       onException.accept(this, e);
       return null;
     }

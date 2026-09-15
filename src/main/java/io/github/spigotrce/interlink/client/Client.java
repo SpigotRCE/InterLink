@@ -1,33 +1,39 @@
 package io.github.spigotrce.interlink.client;
 
 import io.github.spigotrce.interlink.connection.Connection;
-import io.github.spigotrce.interlink.connection.TcpTransport;
+import io.github.spigotrce.interlink.connection.Transport;
 import io.github.spigotrce.interlink.packet.Packet;
-import java.net.Socket;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
-public class Client {
+public class Client<T extends Transport<T>> {
+  private final Supplier<T> transportFactory;
+
   private final String host;
   private final int port;
 
   private final byte[] key;
   private final byte[] iv;
 
-  private final Consumer<Connection<TcpTransport>> onConnect;
-  private final Consumer<Connection<TcpTransport>> onDisconnect;
-  private final BiConsumer<Connection<TcpTransport>, Throwable> onException;
+  private final Consumer<Connection<T>> onConnect;
+  private final Consumer<Connection<T>> onDisconnect;
+  private final BiConsumer<Connection<T>, Throwable> onException;
+
   public volatile boolean lock;
-  private Connection<TcpTransport> connection;
+
+  private Connection<T> connection;
 
   public Client(
+      final Supplier<T> transportFactory,
       final String host,
       final int port,
       final byte[] key,
       final byte[] iv,
-      final Consumer<Connection<TcpTransport>> onConnect,
-      final Consumer<Connection<TcpTransport>> onDisconnect,
-      final BiConsumer<Connection<TcpTransport>, Throwable> onException) {
+      final Consumer<Connection<T>> onConnect,
+      final Consumer<Connection<T>> onDisconnect,
+      final BiConsumer<Connection<T>, Throwable> onException) {
+    this.transportFactory = transportFactory;
     this.host = host;
     this.port = port;
     this.key = key;
@@ -43,8 +49,8 @@ public class Client {
       return;
     }
 
-    final Socket socket = new Socket(host, port);
-    connection = new Connection<TcpTransport>(new TcpTransport(socket), key, iv, onException);
+    final T transport = transportFactory.get().connect(host, port);
+    connection = new Connection<>(transport, key, iv, onException);
     onConnect.accept(connection);
 
     lock = true;
@@ -77,6 +83,10 @@ public class Client {
     }
   }
 
+  public Supplier<T> getTransportFactory() {
+    return transportFactory;
+  }
+
   public String getHost() {
     return host;
   }
@@ -93,23 +103,23 @@ public class Client {
     return iv;
   }
 
-  public Consumer<Connection<TcpTransport>> getOnConnect() {
+  public Consumer<Connection<T>> getOnConnect() {
     return onConnect;
   }
 
-  public Consumer<Connection<TcpTransport>> getOnDisconnect() {
+  public Consumer<Connection<T>> getOnDisconnect() {
     return onDisconnect;
   }
 
-  public BiConsumer<Connection<TcpTransport>, Throwable> getOnException() {
+  public BiConsumer<Connection<T>, Throwable> getOnException() {
     return onException;
   }
 
-  public Connection<TcpTransport> getConnection() {
+  public Connection<T> getConnection() {
     return connection;
   }
 
-  public void setConnection(final Connection<TcpTransport> connection) {
+  public void setConnection(final Connection<T> connection) {
     this.connection = connection;
   }
 }

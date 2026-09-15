@@ -11,4 +11,5 @@ repositories {
 
 dependencies {
     implementation 'com.google.guava:guava:33.4.8-jre'
+    implementation 'org.java-websocket:Java-WebSocket:1.6.0'
 }

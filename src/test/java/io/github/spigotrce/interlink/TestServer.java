@@ -13,8 +13,9 @@ public final class TestServer {
   public static final HashMap<String, Connection<TcpTransport>> namedConnections = new HashMap<>();
 
   public static void main(final String[] args) throws Exception {
-    final Server server =
-        new Server(
+    final Server<TcpTransport> server =
+        new Server<TcpTransport>(
+            TcpTransport::new,
             Shared.host,
             Shared.port,
             Shared.key,

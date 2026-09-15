@@ -3,14 +3,20 @@ package io.github.spigotrce.interlink.connection;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
 
-public class TcpTransport implements Transport {
-  private final Socket socket;
-  private final DataOutputStream out;
-  private final DataInputStream in;
+public class TcpTransport implements Transport<TcpTransport> {
+  private ServerSocket serverSocket;
+  private Socket socket;
 
-  public TcpTransport(final Socket socket) throws IOException {
+  private DataOutputStream out;
+  private DataInputStream in;
+
+  public TcpTransport() {}
+
+  private TcpTransport(final Socket socket) throws IOException {
     this.socket = socket;
     out = new DataOutputStream(socket.getOutputStream());
     in = new DataInputStream(socket.getInputStream());
@@ -33,14 +39,45 @@ public class TcpTransport implements Transport {
 
   @Override
   public void close() throws IOException {
-    in.close();
-    out.close();
-    socket.close();
+    if (in != null) {
+      in.close();
+    }
+    if (out != null) {
+      out.close();
+    }
+    if (socket != null) {
+      socket.close();
+    }
+    if (serverSocket != null) {
+      serverSocket.close();
+    }
   }
 
   @Override
   public boolean isOpen() {
-    return !socket.isClosed();
+    return socket != null && !socket.isClosed();
+  }
+
+  @Override
+  public void bind(final String host, final int port) throws IOException {
+    if (serverSocket != null) {
+      throw new IOException("Transport is already bound");
+    }
+    serverSocket = new ServerSocket();
+    serverSocket.bind(new InetSocketAddress(host, port));
+  }
+
+  @Override
+  public TcpTransport accept() throws IOException {
+    return new TcpTransport(serverSocket.accept());
+  }
+
+  @Override
+  public TcpTransport connect(final String host, final int port) throws IOException {
+    socket = new Socket(host, port);
+    out = new DataOutputStream(socket.getOutputStream());
+    in = new DataInputStream(socket.getInputStream());
+    return this;
   }
 
   public Socket getSocket() {

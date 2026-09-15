@@ -10,8 +10,9 @@ import java.util.Scanner;
 
 public final class TestClient {
   public static void main(final String[] args) throws Exception {
-    final Client testClient =
-        new Client(
+    final Client<TcpTransport> testClient =
+        new Client<TcpTransport>(
+            TcpTransport::new,
             Shared.host,
             Shared.port,
             Shared.key,
