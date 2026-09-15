@@ -15,7 +15,7 @@ public class Client {
   private final Consumer<Connection<TcpTransport>> onConnect;
   private final Consumer<Connection<TcpTransport>> onDisconnect;
   private final BiConsumer<Connection<TcpTransport>, Throwable> onException;
-  public boolean lock;
+  public volatile boolean lock;
   private Connection<TcpTransport> connection;
 
   public Client(

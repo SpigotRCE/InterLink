@@ -28,7 +28,7 @@ public class Server {
   private final List<Connection<TcpTransport>> connections =
       Collections.synchronizedList(new ArrayList<>());
 
-  public boolean lock;
+  public volatile boolean lock;
 
   public Server(
       final String host,
@@ -61,9 +61,20 @@ public class Server {
 
         new Thread(
                 () -> {
-                  while (!clientSocket.isClosed() && lock) {
-                    final Packet<?> packet = connection.read();
-                    connection.getRegistry().handle(packet);
+                  try {
+                    while (!clientSocket.isClosed() && lock) {
+                      final Packet<?> packet = connection.read();
+                      if (packet == null) {
+                        break;
+                      }
+                      connection.getRegistry().handle(packet);
+                    }
+                  } catch (final Exception e) {
+                    onException.accept(connection, e);
+                  } finally {
+                    connections.remove(connection);
+                    connection.close();
+                    onDisconnect.accept(connection);
                   }
                 })
             .start();
