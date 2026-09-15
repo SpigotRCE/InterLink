@@ -24,7 +24,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * pipeline.addFirst("encryption", new EncryptionLayer(key));
  * pipeline.addLast("compression", new CompressionLayer());
  * }</pre>
- *
+ * <p>
  * Outbound data is then compressed before encryption and inbound data is decrypted before
  * decompression. Encrypted bytes are indistinguishable from random noise and will not compress,
  * which is exactly why compression must always run application-ward of encryption.
@@ -37,24 +37,11 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class ConnectionPipeline {
 
-  /** Reads one frame from the wire. Thrown exceptions propagate as {@link IOException}. */
-  @FunctionalInterface
-  public interface WireReader {
-    byte[] read() throws IOException;
-  }
-
-  /** Writes one frame to the wire. Thrown exceptions propagate as {@link IOException}. */
-  @FunctionalInterface
-  public interface WireWriter {
-    void write(byte[] data) throws IOException;
-  }
-
   private final WireReader reader;
   private final WireWriter writer;
   private final List<LayerEntry> layers = new CopyOnWriteArrayList<>();
   private final Map<String, Object> sharedState = new HashMap<>();
   private final BlockingQueue<byte[]> inboundQueue = new LinkedBlockingQueue<>();
-
   public ConnectionPipeline(final WireReader reader, final WireWriter writer) {
     this.reader = reader;
     this.writer = writer;
@@ -169,6 +156,18 @@ public class ConnectionPipeline {
     }
     final LayerEntry entry = layers.get(index);
     entry.layer().onOutbound(data, new Context(index, entry.name()));
+  }
+
+  /** Reads one frame from the wire. Thrown exceptions propagate as {@link IOException}. */
+  @FunctionalInterface
+  public interface WireReader {
+    byte[] read() throws IOException;
+  }
+
+  /** Writes one frame to the wire. Thrown exceptions propagate as {@link IOException}. */
+  @FunctionalInterface
+  public interface WireWriter {
+    void write(byte[] data) throws IOException;
   }
 
   private record LayerEntry(String name, Layer layer) {}

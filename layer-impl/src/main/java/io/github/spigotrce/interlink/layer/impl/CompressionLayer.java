@@ -16,7 +16,7 @@ import java.io.IOException;
  *   <li>{@code 0x01} + zlib stream - the message was compressed
  * </ul>
  *
- * Each message is treated as one complete, discrete unit: this layer assumes whole messages are
+ * <p>Each message is treated as one complete, discrete unit: this layer assumes whole messages are
  * already delimited by whatever sits below the pipeline. A length-prefix framing layer, if ever
  * needed over a raw byte stream, must sit wire-ward of this one.
  *
@@ -81,8 +81,7 @@ public class CompressionLayer implements Layer {
       throw new LayerException("Corrupt compressed data", e);
     }
     if (decompressed.length > maxDecompressedLength) {
-      throw new LayerException(
-          "Decompressed data exceeds limit: " + maxDecompressedLength);
+      throw new LayerException("Decompressed data exceeds limit: " + maxDecompressedLength);
     }
     ctx.fireInbound(decompressed);
   }
@@ -123,5 +122,4 @@ public class CompressionLayer implements Layer {
     System.arraycopy(data, 0, framed, 1, data.length);
     return framed;
   }
-
 }

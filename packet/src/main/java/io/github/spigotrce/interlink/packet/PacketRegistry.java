@@ -44,7 +44,8 @@ public class PacketRegistry {
    * @param codec {@link PacketCodec} of the packet
    * @param <T> type of the packet
    */
-  public <T extends Packet<?>> void registerPacket(final Class<T> packetClass, final PacketCodec<T> codec) {
+  public <T extends Packet<?>> void registerPacket(
+      final Class<T> packetClass, final PacketCodec<T> codec) {
     idCache.put(packetClass, packets.size());
     packets.add(
         new PacketEntry<>(
@@ -63,7 +64,8 @@ public class PacketRegistry {
    * @param out {@link OutputBuffer} to encode to
    */
   public void encode(final Packet<?> packet, final OutputBuffer out) {
-    @SuppressWarnings("unchecked") final PacketEntry<Packet<?>> entry = (PacketEntry<Packet<?>>) packets.get(getId(packet));
+    @SuppressWarnings("unchecked")
+    final PacketEntry<Packet<?>> entry = (PacketEntry<Packet<?>>) packets.get(getId(packet));
     entry.codec().write(packet, out);
   }
 
@@ -83,7 +85,8 @@ public class PacketRegistry {
    * @param in {@link InputBuffer} to decode from
    */
   public Packet<?> decode(final int id, final InputBuffer in) {
-    @SuppressWarnings("unchecked") final PacketEntry<Packet<?>> entry = (PacketEntry<Packet<?>>) packets.get(id);
+    @SuppressWarnings("unchecked")
+    final PacketEntry<Packet<?>> entry = (PacketEntry<Packet<?>>) packets.get(id);
     return entry.codec().read(in);
   }
 
@@ -93,7 +96,8 @@ public class PacketRegistry {
    * @param packet {@link Packet} packet to be handled.
    */
   public void handle(final Packet<?> packet) {
-    @SuppressWarnings("unchecked") final PacketEntry<Packet<?>> entry = (PacketEntry<Packet<?>>) packets.get(getId(packet));
+    @SuppressWarnings("unchecked")
+    final PacketEntry<Packet<?>> entry = (PacketEntry<Packet<?>>) packets.get(getId(packet));
     entry.handler.accept(packet);
   }
 

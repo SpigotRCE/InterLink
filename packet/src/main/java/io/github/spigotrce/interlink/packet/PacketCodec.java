@@ -11,7 +11,7 @@ import java.util.function.Function;
  * @param <T> Type of the packet
  * @author SpigotRCE
  */
-public class PacketCodec<T> {
+public final class PacketCodec<T> {
   private final Function<InputBuffer, T> reader;
   private final BiConsumer<T, OutputBuffer> writer;
 
