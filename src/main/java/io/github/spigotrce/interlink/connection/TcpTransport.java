@@ -91,4 +91,20 @@ public class TcpTransport implements Transport<TcpTransport> {
   public DataInputStream getIn() {
     return in;
   }
+
+  @Override
+  public String getHostname() {
+    if (socket != null && socket.getRemoteSocketAddress() instanceof final InetSocketAddress addr) {
+      return addr.getHostString();
+    }
+    return null;
+  }
+
+  @Override
+  public int getPort() {
+    if (socket != null && socket.getRemoteSocketAddress() instanceof final InetSocketAddress addr) {
+      return addr.getPort();
+    }
+    return -1;
+  }
 }

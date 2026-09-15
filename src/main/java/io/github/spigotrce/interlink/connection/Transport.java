@@ -16,4 +16,8 @@ public interface Transport<T extends Transport<T>> {
   T accept() throws IOException;
 
   T connect(final String host, final int port) throws IOException;
+
+  String getHostname();
+
+  int getPort();
 }

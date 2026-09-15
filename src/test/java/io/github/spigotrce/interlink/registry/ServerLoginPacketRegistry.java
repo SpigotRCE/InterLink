@@ -33,9 +33,9 @@ public class ServerLoginPacketRegistry extends PacketRegistry {
           "User "
               + packet.username()
               + " connected from "
-              + connection.getTransport().getSocket().getInetAddress().getHostAddress()
+              + connection.getTransport().getHostname()
               + ":"
-              + connection.getTransport().getSocket().getPort());
+              + connection.getTransport().getPort());
 
       TestServer.namedConnections
           .values()

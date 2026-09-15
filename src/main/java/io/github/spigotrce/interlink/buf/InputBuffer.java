@@ -1,7 +1,6 @@
 package io.github.spigotrce.interlink.buf;
 
 import com.google.common.io.ByteArrayDataInput;
-import io.github.spigotrce.interlink.buf.InputBuffer;
 import io.github.spigotrce.interlink.packet.Packet;
 import io.github.spigotrce.interlink.packet.PacketCodec;
 import java.io.ByteArrayInputStream;
@@ -168,7 +167,17 @@ public class InputBuffer implements ByteArrayDataInput {
 
   public <T> List<T> readList(
       final IntFunction<T[]> generator, final Function<InputBuffer, T> reader) {
+    return readList(generator, reader, Integer.MAX_VALUE);
+  }
+
+  public <T> List<T> readList(
+      final IntFunction<T[]> generator,
+      final Function<InputBuffer, T> reader,
+      final int maxSize) {
     final int size = readInt();
+    if (size < 0 || size > maxSize) {
+      throw new IllegalStateException("List size out of bounds: " + size);
+    }
     final List<T> list = new ArrayList<>(size);
     for (int i = 0; i < size; i++) {
       list.add(reader.apply(this));

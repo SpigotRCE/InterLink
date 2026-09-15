@@ -16,10 +16,13 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 public class Connection<T extends Transport<T>> {
+  public static final int MAX_FRAME_LENGTH = 8 * 1024 * 1024; // 8 mb
+
   private final T transport;
   private final Cipher encryptCipher;
   private final Cipher decryptCipher;
   private final BiConsumer<Connection<T>, Throwable> onException;
+  private final Object sendLock = new Object();
 
   private PacketRegistry registry;
   private int compressionThreshold = 0;
@@ -63,14 +66,16 @@ public class Connection<T extends Transport<T>> {
         data = ZLibCompressor.compress(data);
       }
 
-      data = encryptCipher.doFinal(data);
+      final byte[] encrypted;
+      synchronized (sendLock) {
+        encrypted = encryptCipher.doFinal(data);
+      }
 
-      // prepend metadata
       final ByteArrayOutputStream meta = new ByteArrayOutputStream();
       final DataOutputStream metaOut = new DataOutputStream(meta);
       metaOut.writeBoolean(compressed);
-      metaOut.writeInt(data.length);
-      metaOut.write(data);
+      metaOut.writeInt(encrypted.length);
+      metaOut.write(encrypted);
 
       transport.send(meta.toByteArray());
     } catch (final Exception e) {
@@ -88,6 +93,10 @@ public class Connection<T extends Transport<T>> {
       final DataInputStream metaIn = new DataInputStream(new ByteArrayInputStream(frame));
       final boolean compressed = metaIn.readBoolean();
       final int length = metaIn.readInt();
+
+      if (length < 0 || length > MAX_FRAME_LENGTH) {
+        throw new IOException("Frame length out of bounds: " + length);
+      }
 
       byte[] data = new byte[length];
       metaIn.readFully(data);

@@ -3,7 +3,9 @@ package io.github.spigotrce.interlink.packet;
 import io.github.spigotrce.interlink.buf.InputBuffer;
 import io.github.spigotrce.interlink.buf.OutputBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -15,6 +17,7 @@ import java.util.function.Consumer;
  */
 public class PacketRegistry {
   public final List<PacketEntry<? extends Packet<?>>> packets = new ArrayList<>();
+  private final Map<Class<?>, Integer> idCache = new HashMap<>();
 
   /**
    * Method to register a packet. When a packet is registered, the max packet id is incremented and
@@ -27,6 +30,7 @@ public class PacketRegistry {
    */
   public <T extends Packet<?>> void registerPacket(
       final Class<T> packetClass, final PacketCodec<T> codec, final Consumer<T> handler) {
+    idCache.put(packetClass, packets.size());
     packets.add(new PacketEntry<>(packetClass, codec, handler));
   }
 
@@ -40,6 +44,7 @@ public class PacketRegistry {
    * @param <T> type of the packet
    */
   public <T extends Packet<?>> void registerPacket(final Class<T> packetClass, final PacketCodec<T> codec) {
+    idCache.put(packetClass, packets.size());
     packets.add(
         new PacketEntry<>(
             packetClass,
@@ -62,12 +67,7 @@ public class PacketRegistry {
   }
 
   public int getId(final Packet<?> packet) {
-    for (final PacketEntry<? extends Packet<?>> entry : packets) {
-      if (entry.clazz().equals(packet.getClass())) {
-        return packets.indexOf(entry);
-      }
-    }
-    return -1;
+    return idCache.getOrDefault(packet.getClass(), -1);
   }
 
   /**

@@ -7,6 +7,7 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import org.java_websocket.WebSocket;
@@ -27,10 +28,15 @@ public class WsTransport implements Transport<WsTransport> {
   private volatile boolean listening;
   private volatile boolean connected;
 
+  private String hostname;
+  private int port;
+
   public WsTransport() {}
 
-  private WsTransport(final WebSocket socket) {
+  private WsTransport(final WebSocket socket, final String hostname, final int port) {
     this.socket = socket;
+    this.hostname = hostname;
+    this.port = port;
     connected = true;
   }
 
@@ -45,18 +51,17 @@ public class WsTransport implements Transport<WsTransport> {
   @Override
   public byte[] receive() throws IOException {
     while (true) {
-      final byte[] data;
       try {
-        data = received.poll(100, TimeUnit.MILLISECONDS);
+        if (!isOpen()) {
+          throw new IOException("WebSocket connection is closed");
+        }
+        final byte[] data = received.poll(1, TimeUnit.SECONDS);
+        if (data != null) {
+          return data;
+        }
       } catch (final InterruptedException e) {
         Thread.currentThread().interrupt();
         throw new IOException("Interrupted while waiting for a websocket message", e);
-      }
-      if (data != null) {
-        return data;
-      }
-      if (!isOpen()) {
-        throw new IOException("WebSocket connection is closed");
       }
     }
   }
@@ -71,7 +76,7 @@ public class WsTransport implements Transport<WsTransport> {
     } else if (server != null) {
       listening = false;
       try {
-        server.stop();
+        server.stop(1000);
       } catch (final InterruptedException e) {
         Thread.currentThread().interrupt();
         throw new IOException("Interrupted while stopping websocket server", e);
@@ -100,61 +105,74 @@ public class WsTransport implements Transport<WsTransport> {
       probe.bind(new InetSocketAddress(host, port));
     }
 
-    server =
-        new WebSocketServer(
-            new InetSocketAddress(host, port), Collections.singletonList(new Draft_6455())) {
-          @Override
-          public void onStart() {}
+    try {
+      server =
+          new WebSocketServer(
+              new InetSocketAddress(host, port), Collections.singletonList(new Draft_6455())) {
+            @Override
+            public void onStart() {}
 
-          @Override
-          public void onOpen(final WebSocket conn, final ClientHandshake handshake) {
-            final WsTransport transport = new WsTransport(conn);
-            conn.setAttachment(transport);
-            accepted.offer(transport);
-          }
-
-          @Override
-          public void onMessage(final WebSocket conn, final String message) {}
-
-          @Override
-          public void onMessage(final WebSocket conn, final ByteBuffer message) {
-            final WsTransport transport = (WsTransport) conn.getAttachment();
-            if (transport != null) {
-              transport.offer(message);
+            @Override
+            public void onOpen(final WebSocket conn, final ClientHandshake handshake) {
+              final WsTransport transport = new WsTransport(conn, hostname(conn), remotePort(conn));
+              conn.setAttachment(transport);
+              accepted.offer(transport);
             }
-          }
 
-          @Override
-          public void onClose(
-              final WebSocket conn, final int code, final String reason, final boolean remote) {
-            final WsTransport transport = (WsTransport) conn.getAttachment();
-            if (transport != null) {
-              transport.connected = false;
+            @Override
+            public void onMessage(final WebSocket conn, final String message) {}
+
+            @Override
+            public void onMessage(final WebSocket conn, final ByteBuffer message) {
+              final WsTransport transport = (WsTransport) conn.getAttachment();
+              if (transport != null) {
+                transport.offer(message);
+              }
             }
-          }
 
-          @Override
-          public void onError(final WebSocket conn, final Exception ex) {}
-        };
-    server.start();
-    listening = true;
+            @Override
+            public void onClose(
+                final WebSocket conn,
+                final int code,
+                final String reason,
+                final boolean remote) {
+              final WsTransport transport = (WsTransport) conn.getAttachment();
+              if (transport != null) {
+                transport.connected = false;
+              }
+            }
+
+            @Override
+            public void onError(final WebSocket conn, final Exception ex) {}
+          };
+      server.start();
+      listening = true;
+    } catch (final Exception e) {
+      if (server != null) {
+        try {
+          server.stop(1000);
+        } catch (final InterruptedException ignored) {
+          Thread.currentThread().interrupt();
+        }
+      }
+      throw new IOException("Failed to bind websocket server on " + host + ":" + port, e);
+    }
   }
 
   @Override
   public WsTransport accept() throws IOException {
     while (true) {
-      final WsTransport transport;
       try {
-        transport = accepted.poll(100, TimeUnit.MILLISECONDS);
+        if (!listening) {
+          throw new IOException("WebSocket server is closed");
+        }
+        final WsTransport transport = accepted.poll(1, TimeUnit.SECONDS);
+        if (transport != null) {
+          return transport;
+        }
       } catch (final InterruptedException e) {
         Thread.currentThread().interrupt();
         throw new IOException("Interrupted while accepting a websocket connection", e);
-      }
-      if (transport != null) {
-        return transport;
-      }
-      if (!listening) {
-        throw new IOException("WebSocket server is closed");
       }
     }
   }
@@ -162,13 +180,15 @@ public class WsTransport implements Transport<WsTransport> {
   @Override
   public WsTransport connect(final String host, final int port) throws IOException {
     final WsTransport[] holder = new WsTransport[1];
+    final CountDownLatch opened = new CountDownLatch(1);
     client =
         new WebSocketClient(
             URI.create("ws://" + host + ":" + port), new Draft_6455()) {
           @Override
           public void onOpen(final ServerHandshake handshake) {
-            holder[0] = new WsTransport(getConnection());
+            holder[0] = new WsTransport(getConnection(), host, port);
             getConnection().setAttachment(holder[0]);
+            opened.countDown();
           }
 
           @Override
@@ -189,15 +209,21 @@ public class WsTransport implements Transport<WsTransport> {
           }
 
           @Override
-          public void onError(final Exception ex) {}
+          public void onError(final Exception ex) {
+            opened.countDown();
+          }
         };
 
     try {
       client.connectBlocking();
+      if (!opened.await(10, TimeUnit.SECONDS)) {
+        throw new IOException("Timed out opening websocket connection to ws://" + host + ":" + port);
+      }
     } catch (final InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new IOException("Interrupted while opening websocket connection", e);
     }
+
     if (!client.isOpen() || holder[0] == null) {
       throw new IOException("Failed to open websocket connection to ws://" + host + ":" + port);
     }
@@ -216,5 +242,29 @@ public class WsTransport implements Transport<WsTransport> {
 
   public WebSocketServer getServer() {
     return server;
+  }
+
+  @Override
+  public String getHostname() {
+    return hostname;
+  }
+
+  @Override
+  public int getPort() {
+    return port;
+  }
+
+  private static String hostname(final WebSocket webSocket) {
+    if (webSocket.getRemoteSocketAddress() instanceof final InetSocketAddress addr) {
+      return addr.getHostString();
+    }
+    return null;
+  }
+
+  private static int remotePort(final WebSocket webSocket) {
+    if (webSocket.getRemoteSocketAddress() instanceof final InetSocketAddress addr) {
+      return addr.getPort();
+    }
+    return -1;
   }
 }
