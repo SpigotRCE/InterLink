@@ -70,7 +70,8 @@ public class Server<T extends Transport<T>> {
       connections.add(connection);
       onConnect.accept(connection);
 
-      new Thread(
+      final Thread receiver =
+          new Thread(
               () -> {
                 try {
                   while (transport.isOpen() && lock) {
@@ -87,8 +88,10 @@ public class Server<T extends Transport<T>> {
                   connection.close();
                   onDisconnect.accept(connection);
                 }
-              })
-          .start();
+              });
+      receiver.setDaemon(true);
+      receiver.setName("Server-Connection-" + connections.size());
+      receiver.start();
     }
   }
 
@@ -96,6 +99,16 @@ public class Server<T extends Transport<T>> {
     lock = false;
     if (listener != null) {
       listener.close();
+    }
+    final Connection<T>[] snapshot;
+    synchronized (connections) {
+      snapshot = connections.toArray(new Connection[0]);
+    }
+    for (final Connection<T> conn : snapshot) {
+      try {
+        conn.close();
+      } catch (final Exception ignored) {
+      }
     }
   }
 

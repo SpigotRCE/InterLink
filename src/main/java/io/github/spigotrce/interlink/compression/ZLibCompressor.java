@@ -40,11 +40,21 @@ public final class ZLibCompressor {
 
       final ByteArrayOutputStream baos = new ByteArrayOutputStream();
       final byte[] buffer = new byte[512];
+      int noProgress = 0;
       while (!inflater.finished()) {
         final int count = inflater.inflate(buffer);
+        if (count == 0) {
+          if (++noProgress > 1024) {
+            throw new IOException("Decompression made no progress, input may be truncated");
+          }
+        } else {
+          noProgress = 0;
+        }
         baos.write(buffer, 0, count);
       }
       return baos.toByteArray();
+    } catch (final IOException e) {
+      throw e;
     } catch (final Exception e) {
       throw new IOException("Failed to decompress", e);
     } finally {

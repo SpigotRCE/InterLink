@@ -23,7 +23,7 @@ public class TcpTransport implements Transport<TcpTransport> {
   }
 
   @Override
-  public void send(final byte[] data) throws IOException {
+  public synchronized void send(final byte[] data) throws IOException {
     out.writeInt(data.length);
     out.write(data);
     out.flush();

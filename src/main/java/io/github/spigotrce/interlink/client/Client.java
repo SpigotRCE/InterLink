@@ -50,15 +50,19 @@ public class Client<T extends Transport<T>> {
 
     new Thread(
             () -> {
-              while (lock) {
-                final Packet<?> packet = connection.read();
-                if (packet == null) {
-                  if (!connection.isDisconnected()) {
-                    disconnect();
+              try {
+                while (lock) {
+                  final Packet<?> packet = connection.read();
+                  if (packet == null) {
+                    break;
                   }
-                  break;
+                  connection.getRegistry().handle(packet);
                 }
-                connection.getRegistry().handle(packet);
+              } catch (final Exception e) {
+                onException.accept(connection, e);
+              } finally {
+                lock = false;
+                onDisconnect.accept(connection);
               }
             },
             "Client-Receiver")
@@ -69,10 +73,9 @@ public class Client<T extends Transport<T>> {
     if (!lock) {
       return;
     }
+    lock = false;
     if (connection != null) {
       connection.close();
-      onDisconnect.accept(connection);
-      lock = false;
     }
   }
 

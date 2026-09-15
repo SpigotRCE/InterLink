@@ -73,6 +73,9 @@ public class WsTransport implements Transport<WsTransport> {
         socket.close(1000, "Connection closed");
       }
       connected = false;
+      if (client != null) {
+        client.close();
+      }
     } else if (server != null) {
       listening = false;
       try {
@@ -227,6 +230,7 @@ public class WsTransport implements Transport<WsTransport> {
     if (!client.isOpen() || holder[0] == null) {
       throw new IOException("Failed to open websocket connection to ws://" + host + ":" + port);
     }
+    holder[0].client = client;
     return holder[0];
   }
 

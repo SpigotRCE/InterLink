@@ -17,7 +17,8 @@ public class Connection<T extends Transport<T>> {
   private final BiConsumer<Connection<T>, Throwable> onException;
 
   private PacketRegistry registry;
-  private boolean disconnected = false;
+  private volatile boolean disconnected = false;
+  private volatile boolean handlingException = false;
 
   public Connection(
       final T transport, final BiConsumer<Connection<T>, Throwable> onException) {
@@ -40,8 +41,7 @@ public class Connection<T extends Transport<T>> {
       registry.encode(packet, out);
       pipeline.write(out.toByteArray());
     } catch (final Exception e) {
-      disconnected = true;
-      onException.accept(this, e);
+      handleException(e);
     }
   }
 
@@ -62,9 +62,22 @@ public class Connection<T extends Transport<T>> {
       final int id = in.readInt();
       return registry.decode(id, in);
     } catch (final Exception e) {
-      disconnected = true;
-      onException.accept(this, e);
+      handleException(e);
       return null;
+    }
+  }
+
+  private void handleException(final Exception e) {
+    if (handlingException) {
+      disconnected = true;
+      return;
+    }
+    handlingException = true;
+    try {
+      onException.accept(this, e);
+    } finally {
+      handlingException = false;
+      disconnected = true;
     }
   }
 
