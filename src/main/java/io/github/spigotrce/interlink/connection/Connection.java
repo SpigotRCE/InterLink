@@ -6,6 +6,7 @@ import io.github.spigotrce.interlink.layer.CompressionLayer;
 import io.github.spigotrce.interlink.layer.ConnectionPipeline;
 import io.github.spigotrce.interlink.packet.Packet;
 import io.github.spigotrce.interlink.packet.PacketRegistry;
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.function.BiConsumer;
 
@@ -68,7 +69,7 @@ public class Connection<T extends Transport<T>> {
   }
 
   private void handleException(final Exception e) {
-    if (handlingException) {
+    if (handlingException || !transport.isOpen() || e instanceof EOFException) {
       disconnected = true;
       return;
     }
