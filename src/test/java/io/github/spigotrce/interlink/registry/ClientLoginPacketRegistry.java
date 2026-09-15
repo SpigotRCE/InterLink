@@ -1,7 +1,10 @@
 package io.github.spigotrce.interlink.registry;
 
 import io.github.spigotrce.interlink.connection.Connection;
-import io.github.spigotrce.interlink.packet.*;
+import io.github.spigotrce.interlink.packet.DisconnectPacket;
+import io.github.spigotrce.interlink.packet.HandshakePacket;
+import io.github.spigotrce.interlink.packet.LoginSuccessPacket;
+import io.github.spigotrce.interlink.packet.PacketRegistry;
 
 public class ClientLoginPacketRegistry extends PacketRegistry {
   public final Connection connection;

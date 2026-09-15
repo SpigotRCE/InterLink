@@ -1,6 +1,7 @@
 package io.github.spigotrce.interlink.packet;
 
-import io.github.spigotrce.interlink.buf.*;
+import io.github.spigotrce.interlink.buf.InputBuffer;
+import io.github.spigotrce.interlink.buf.OutputBuffer;
 
 public record LoginSuccessPacket(int compressionThreshold) implements Packet<LoginSuccessPacket> {
   public static final PacketCodec<LoginSuccessPacket> CODEC =

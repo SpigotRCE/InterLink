@@ -1,8 +1,13 @@
 package io.github.spigotrce.interlink.registry;
 
 import io.github.spigotrce.interlink.TestServer;
-import io.github.spigotrce.interlink.connection.*;
-import io.github.spigotrce.interlink.packet.*;
+import io.github.spigotrce.interlink.connection.Connection;
+import io.github.spigotrce.interlink.connection.TcpTransport;
+import io.github.spigotrce.interlink.packet.ChatPacket;
+import io.github.spigotrce.interlink.packet.DisconnectPacket;
+import io.github.spigotrce.interlink.packet.HandshakePacket;
+import io.github.spigotrce.interlink.packet.LoginSuccessPacket;
+import io.github.spigotrce.interlink.packet.PacketRegistry;
 
 public class ServerLoginPacketRegistry extends PacketRegistry {
   public final Connection<TcpTransport> connection;

@@ -1,10 +1,16 @@
 package io.github.spigotrce.interlink.server;
 
-import io.github.spigotrce.interlink.connection.*;
+import io.github.spigotrce.interlink.connection.Connection;
+import io.github.spigotrce.interlink.connection.TcpTransport;
 import io.github.spigotrce.interlink.packet.Packet;
-import java.net.*;
-import java.util.*;
-import java.util.function.*;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * Server using tcp transport.

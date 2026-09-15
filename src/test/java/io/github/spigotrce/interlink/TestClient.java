@@ -1,8 +1,10 @@
 package io.github.spigotrce.interlink;
 
 import io.github.spigotrce.interlink.client.Client;
-import io.github.spigotrce.interlink.connection.*;
-import io.github.spigotrce.interlink.packet.*;
+import io.github.spigotrce.interlink.connection.Connection;
+import io.github.spigotrce.interlink.connection.TcpTransport;
+import io.github.spigotrce.interlink.packet.ChatPacket;
+import io.github.spigotrce.interlink.packet.HandshakePacket;
 import io.github.spigotrce.interlink.registry.ClientLoginPacketRegistry;
 import java.util.Scanner;
 

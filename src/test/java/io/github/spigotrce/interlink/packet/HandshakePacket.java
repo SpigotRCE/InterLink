@@ -1,6 +1,7 @@
 package io.github.spigotrce.interlink.packet;
 
-import io.github.spigotrce.interlink.buf.*;
+import io.github.spigotrce.interlink.buf.InputBuffer;
+import io.github.spigotrce.interlink.buf.OutputBuffer;
 
 public record HandshakePacket(String username) implements Packet<HandshakePacket> {
   public static final PacketCodec<HandshakePacket> CODEC =

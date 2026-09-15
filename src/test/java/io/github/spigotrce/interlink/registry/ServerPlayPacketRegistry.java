@@ -2,8 +2,9 @@ package io.github.spigotrce.interlink.registry;
 
 import io.github.spigotrce.interlink.TestServer;
 import io.github.spigotrce.interlink.connection.Connection;
-import io.github.spigotrce.interlink.packet.*;
-import java.util.Map;
+import io.github.spigotrce.interlink.packet.ChatPacket;
+import io.github.spigotrce.interlink.packet.DisconnectPacket;
+import io.github.spigotrce.interlink.packet.PacketRegistry;
 import java.util.Map.Entry;
 
 public class ServerPlayPacketRegistry extends PacketRegistry {

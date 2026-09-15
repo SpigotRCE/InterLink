@@ -1,7 +1,9 @@
 package io.github.spigotrce.interlink.packet;
 
-import io.github.spigotrce.interlink.buf.*;
-import java.util.function.*;
+import io.github.spigotrce.interlink.buf.InputBuffer;
+import io.github.spigotrce.interlink.buf.OutputBuffer;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * A Packet codec which is used to parse reader and writer methods.

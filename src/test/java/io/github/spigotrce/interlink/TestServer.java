@@ -1,10 +1,12 @@
 package io.github.spigotrce.interlink;
 
-import io.github.spigotrce.interlink.connection.*;
+import io.github.spigotrce.interlink.connection.Connection;
+import io.github.spigotrce.interlink.connection.TcpTransport;
 import io.github.spigotrce.interlink.packet.DisconnectPacket;
 import io.github.spigotrce.interlink.registry.ServerLoginPacketRegistry;
 import io.github.spigotrce.interlink.server.Server;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public final class TestServer {
   public static final ArrayList<Connection<TcpTransport>> connections = new ArrayList<>();

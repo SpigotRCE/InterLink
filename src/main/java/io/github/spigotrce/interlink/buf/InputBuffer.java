@@ -1,10 +1,20 @@
 package io.github.spigotrce.interlink.buf;
 
 import com.google.common.io.ByteArrayDataInput;
-import io.github.spigotrce.interlink.packet.*;
-import java.io.*;
-import java.util.*;
-import java.util.function.*;
+import io.github.spigotrce.interlink.buf.InputBuffer;
+import io.github.spigotrce.interlink.packet.Packet;
+import io.github.spigotrce.interlink.packet.PacketCodec;
+import java.io.ByteArrayInputStream;
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.EOFException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.function.IntFunction;
 import org.jspecify.annotations.Nullable;
 
 public class InputBuffer implements ByteArrayDataInput {

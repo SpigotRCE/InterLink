@@ -1,12 +1,19 @@
 package io.github.spigotrce.interlink.connection;
 
-import io.github.spigotrce.interlink.buf.*;
+import io.github.spigotrce.interlink.buf.InputBuffer;
+import io.github.spigotrce.interlink.buf.OutputBuffer;
 import io.github.spigotrce.interlink.compression.ZLibCompressor;
-import io.github.spigotrce.interlink.packet.*;
-import java.io.*;
+import io.github.spigotrce.interlink.packet.Packet;
+import io.github.spigotrce.interlink.packet.PacketRegistry;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.function.BiConsumer;
 import javax.crypto.Cipher;
-import javax.crypto.spec.*;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 public class Connection<T extends Transport> {
   private final T transport;
@@ -38,7 +45,9 @@ public class Connection<T extends Transport> {
   }
 
   public void send(final Packet<?> packet) {
-    if (disconnected) return;
+    if (disconnected) {
+      return;
+    }
     try {
       final OutputBuffer out = OutputBuffer.create();
       final int id = registry.getId(packet);
@@ -50,7 +59,9 @@ public class Connection<T extends Transport> {
 
       byte[] data = out.toByteArray();
       final boolean compressed = data.length >= compressionThreshold && compressionThreshold > 0;
-      if (compressed) data = ZLibCompressor.compress(data);
+      if (compressed) {
+        data = ZLibCompressor.compress(data);
+      }
 
       data = encryptCipher.doFinal(data);
 
@@ -68,7 +79,9 @@ public class Connection<T extends Transport> {
   }
 
   public Packet<?> read() {
-    if (disconnected) return null;
+    if (disconnected) {
+      return null;
+    }
     try {
       final byte[] frame = transport.receive();
       final DataInputStream metaIn = new DataInputStream(new ByteArrayInputStream(frame));
@@ -79,7 +92,9 @@ public class Connection<T extends Transport> {
       metaIn.readFully(data);
 
       data = decryptCipher.doFinal(data);
-      if (compressed) data = ZLibCompressor.decompress(data);
+      if (compressed) {
+        data = ZLibCompressor.decompress(data);
+      }
 
       final InputBuffer in = InputBuffer.create(data);
       final int id = in.readInt();

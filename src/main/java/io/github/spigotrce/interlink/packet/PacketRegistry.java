@@ -1,7 +1,9 @@
 package io.github.spigotrce.interlink.packet;
 
-import io.github.spigotrce.interlink.buf.*;
-import java.util.*;
+import io.github.spigotrce.interlink.buf.InputBuffer;
+import io.github.spigotrce.interlink.buf.OutputBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 /**

@@ -1,9 +1,14 @@
 package io.github.spigotrce.interlink.buf;
 
 import com.google.common.io.ByteArrayDataOutput;
-import io.github.spigotrce.interlink.packet.*;
-import java.io.*;
-import java.util.*;
+import io.github.spigotrce.interlink.packet.Packet;
+import io.github.spigotrce.interlink.packet.PacketCodec;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 
 public class OutputBuffer implements ByteArrayDataOutput {

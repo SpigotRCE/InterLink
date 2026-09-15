@@ -1,9 +1,11 @@
 package io.github.spigotrce.interlink.client;
 
-import io.github.spigotrce.interlink.connection.*;
+import io.github.spigotrce.interlink.connection.Connection;
+import io.github.spigotrce.interlink.connection.TcpTransport;
 import io.github.spigotrce.interlink.packet.Packet;
 import java.net.Socket;
-import java.util.function.*;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public class Client {
   private final String host;
