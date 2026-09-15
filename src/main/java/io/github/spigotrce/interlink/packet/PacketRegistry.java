@@ -3,6 +3,7 @@ package io.github.spigotrce.interlink.packet;
 import io.github.spigotrce.interlink.buf.InputBuffer;
 import io.github.spigotrce.interlink.buf.OutputBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +17,7 @@ import java.util.function.Consumer;
  * @author SpigotRCE
  */
 public class PacketRegistry {
-  public final List<PacketEntry<? extends Packet<?>>> packets = new ArrayList<>();
+  private final List<PacketEntry<? extends Packet<?>>> packets = new ArrayList<>();
   private final Map<Class<?>, Integer> idCache = new HashMap<>();
 
   /**
@@ -68,6 +69,11 @@ public class PacketRegistry {
 
   public int getId(final Packet<?> packet) {
     return idCache.getOrDefault(packet.getClass(), -1);
+  }
+
+  /** Returns an unmodifiable view of the registered packets in registration order. */
+  public List<PacketEntry<? extends Packet<?>>> getPackets() {
+    return Collections.unmodifiableList(packets);
   }
 
   /**
