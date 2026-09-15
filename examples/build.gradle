@@ -2,6 +2,8 @@ dependencies {
     implementation project(':buffer')
     implementation project(':compressor')
     implementation project(':compressor-impl')
+    implementation project(':cipher')
+    implementation project(':cipher-impl')
     implementation project(':layer')
     implementation project(':layer-impl')
     implementation project(':transport')

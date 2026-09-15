@@ -1,4 +1,5 @@
 dependencies {
     api project(':layer')
     api project(':compressor')
+    api project(':cipher')
 }

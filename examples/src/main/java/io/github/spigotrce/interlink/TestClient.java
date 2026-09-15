@@ -1,5 +1,6 @@
 package io.github.spigotrce.interlink;
 
+import io.github.spigotrce.interlink.cipher.impl.AesCfbCipher;
 import io.github.spigotrce.interlink.client.Client;
 import io.github.spigotrce.interlink.compression.ZLibCompressor;
 import io.github.spigotrce.interlink.connection.Connection;
@@ -52,7 +53,7 @@ public final class TestClient {
   }
 
   public static void onConnect(final Connection<TcpTransport> connection) {
-    connection.getPipeline().addFirst("encryption", new EncryptionLayer(Shared.key));
+    connection.getPipeline().addFirst("encryption", new EncryptionLayer(new AesCfbCipher(Shared.key)));
     connection.getPipeline().addLast("compression", new CompressionLayer(new ZLibCompressor()));
     connection.setRegistry(new ClientLoginPacketRegistry(connection));
     connection.send(new HandshakePacket(input("Enter username: ")));
