@@ -1,4 +1,3 @@
 package io.github.spigotrce.interlink;
 
-public class ServerPacketRegistry {
-}
+public class ServerPacketRegistry {}

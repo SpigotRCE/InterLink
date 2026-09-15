@@ -2,7 +2,6 @@ package io.github.spigotrce.interlink.client;
 
 import io.github.spigotrce.interlink.connection.*;
 import io.github.spigotrce.interlink.packet.Packet;
-
 import java.net.Socket;
 import java.util.function.*;
 
@@ -19,13 +18,13 @@ public class Client {
   public boolean lock;
   private Connection<TcpTransport> connection;
 
-  public Client(String host,
-    int port,
-    byte[] key,
-    byte[] iv,
-    Consumer<Connection<TcpTransport>> onConnect,
-    Consumer<Connection<TcpTransport>> onDisconnect,
-    BiConsumer<Connection<TcpTransport>, Throwable> onException) {
+  public Client(final String host,
+    final int port,
+    final byte[] key,
+    final byte[] iv,
+    final Consumer<Connection<TcpTransport>> onConnect,
+    final Consumer<Connection<TcpTransport>> onDisconnect,
+    final BiConsumer<Connection<TcpTransport>, Throwable> onException) {
     this.host = host;
     this.port = port;
     this.key = key;
@@ -33,23 +32,23 @@ public class Client {
     this.onConnect = onConnect;
     this.onDisconnect = onDisconnect;
     this.onException = onException;
-    this.lock = false;
+    lock = false;
   }
 
   public void connect() throws Exception {
-    if (this.lock) {
+    if (lock) {
       return;
     }
 
-    Socket socket = new Socket(host, port);
+    final Socket socket = new Socket(host, port);
     connection = new Connection<TcpTransport>(new TcpTransport(socket), key, iv, onException);
     onConnect.accept(connection);
 
-    this.lock = true;
+    lock = true;
 
     new Thread(() -> {
-      while (this.lock) {
-        Packet<?> packet = connection.read();
+      while (lock) {
+        final Packet<?> packet = connection.read();
         if (packet == null) {
           if (!connection.isDisconnected()) {
             disconnect();
@@ -62,13 +61,13 @@ public class Client {
   }
 
   public void disconnect() {
-    if (!this.lock) {
+    if (!lock) {
       return;
     }
     if (connection != null) {
       connection.close();
       onDisconnect.accept(connection);
-      this.lock = false;
+      lock = false;
     }
   }
 
@@ -104,7 +103,7 @@ public class Client {
     return connection;
   }
 
-  public void setConnection(Connection<TcpTransport> connection) {
+  public void setConnection(final Connection<TcpTransport> connection) {
     this.connection = connection;
   }
 }

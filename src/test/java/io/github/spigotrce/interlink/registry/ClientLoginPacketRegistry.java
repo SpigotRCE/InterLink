@@ -6,7 +6,7 @@ import io.github.spigotrce.interlink.packet.*;
 public class ClientLoginPacketRegistry extends PacketRegistry {
   public final Connection connection;
 
-  public ClientLoginPacketRegistry(Connection connection) {
+  public ClientLoginPacketRegistry(final Connection connection) {
     this.connection = connection;
 
     registerPacket(HandshakePacket.class, HandshakePacket.CODEC);
@@ -14,12 +14,12 @@ public class ClientLoginPacketRegistry extends PacketRegistry {
     registerPacket(LoginSuccessPacket.class, LoginSuccessPacket.CODEC, this::handle);
   }
 
-  public void handle(DisconnectPacket packet) {
+  public void handle(final DisconnectPacket packet) {
     System.out.println("Disconnected from server: " + packet.message());
     connection.close();
   }
 
-  public void handle(LoginSuccessPacket packet) {
+  public void handle(final LoginSuccessPacket packet) {
     System.out.println("Successfully logged in to server");
     connection.setRegistry(new ClientPlayPacketRegistry(connection));
     connection.setCompressionThreshold(packet.compressionThreshold());

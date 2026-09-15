@@ -7,7 +7,7 @@ import io.github.spigotrce.interlink.packet.*;
 public class ServerLoginPacketRegistry extends PacketRegistry {
   public final Connection<TcpTransport> connection;
 
-  public ServerLoginPacketRegistry(Connection<TcpTransport> connection) {
+  public ServerLoginPacketRegistry(final Connection<TcpTransport> connection) {
     this.connection = connection;
 
     registerPacket(HandshakePacket.class, HandshakePacket.CODEC, this::handle);
@@ -15,7 +15,7 @@ public class ServerLoginPacketRegistry extends PacketRegistry {
     registerPacket(LoginSuccessPacket.class, LoginSuccessPacket.CODEC);
   }
 
-  public void handle(HandshakePacket packet) {
+  public void handle(final HandshakePacket packet) {
     if (TestServer.namedConnections.containsKey(packet.username())) {
       connection.send(new DisconnectPacket("Username already taken"));
       connection.close();
@@ -24,16 +24,20 @@ public class ServerLoginPacketRegistry extends PacketRegistry {
       connection.setRegistry(new ServerPlayPacketRegistry(connection));
       TestServer.connections.add(connection);
       TestServer.namedConnections.put(packet.username(), connection);
-      System.out.println("User " +
-        packet.username() +
-        " connected from " +
-        connection.getTransport().getSocket().getInetAddress().getHostAddress() +
-        ":" +
-        connection.getTransport().getSocket().getPort());
+      System.out.println(
+          "User "
+              + packet.username()
+              + " connected from "
+              + connection.getTransport().getSocket().getInetAddress().getHostAddress()
+              + ":"
+              + connection.getTransport().getSocket().getPort());
 
-      TestServer.namedConnections.values().forEach(conn -> {
-        conn.send(new ChatPacket("User " + packet.username() + " has joined the server"));
-      });
+      TestServer.namedConnections
+          .values()
+          .forEach(
+              conn -> {
+                conn.send(new ChatPacket("User " + packet.username() + " has joined the server"));
+              });
     }
   }
 }

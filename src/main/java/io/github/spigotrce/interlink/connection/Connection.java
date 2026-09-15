@@ -3,11 +3,10 @@ package io.github.spigotrce.interlink.connection;
 import io.github.spigotrce.interlink.buf.*;
 import io.github.spigotrce.interlink.compression.ZLibCompressor;
 import io.github.spigotrce.interlink.packet.*;
-
-import javax.crypto.Cipher;
-import javax.crypto.spec.*;
 import java.io.*;
 import java.util.function.BiConsumer;
+import javax.crypto.Cipher;
+import javax.crypto.spec.*;
 
 public class Connection<T extends Transport> {
   private final T transport;
@@ -20,15 +19,15 @@ public class Connection<T extends Transport> {
   private boolean disconnected = false;
 
   public Connection(
-    T transport,
-    byte[] key, byte[] iv,
-    BiConsumer<Connection<T>, Throwable> onException
+    final T transport,
+    final byte[] key, final byte[] iv,
+    final BiConsumer<Connection<T>, Throwable> onException
   ) throws Exception {
     this.transport = transport;
     this.onException = onException;
 
-    SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
-    IvParameterSpec ivSpec = new IvParameterSpec(iv);
+    final SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
+    final IvParameterSpec ivSpec = new IvParameterSpec(iv);
 
     encryptCipher = Cipher.getInstance("AES/CFB8/NoPadding");
     encryptCipher.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec);
@@ -37,11 +36,11 @@ public class Connection<T extends Transport> {
     decryptCipher.init(Cipher.DECRYPT_MODE, keySpec, ivSpec);
   }
 
-  public void send(Packet<?> packet) {
+  public void send(final Packet<?> packet) {
     if (disconnected) return;
     try {
-      OutputBuffer out = OutputBuffer.create();
-      int id = registry.getId(packet);
+      final OutputBuffer out = OutputBuffer.create();
+      final int id = registry.getId(packet);
       if (id == -1) {
         throw new IOException("Unregistered packet: " + packet.getClass());
       }
@@ -49,20 +48,20 @@ public class Connection<T extends Transport> {
       registry.encode(packet, out);
 
       byte[] data = out.toByteArray();
-      boolean compressed = data.length >= compressionThreshold && compressionThreshold > 0;
+      final boolean compressed = data.length >= compressionThreshold && compressionThreshold > 0;
       if (compressed) data = ZLibCompressor.compress(data);
 
       data = encryptCipher.doFinal(data);
 
       // prepend metadata
-      ByteArrayOutputStream meta = new ByteArrayOutputStream();
-      DataOutputStream metaOut = new DataOutputStream(meta);
+      final ByteArrayOutputStream meta = new ByteArrayOutputStream();
+      final DataOutputStream metaOut = new DataOutputStream(meta);
       metaOut.writeBoolean(compressed);
       metaOut.writeInt(data.length);
       metaOut.write(data);
 
       transport.send(meta.toByteArray());
-    } catch (Exception e) {
+    } catch (final Exception e) {
       onException.accept(this, e);
     }
   }
@@ -70,10 +69,10 @@ public class Connection<T extends Transport> {
   public Packet<?> read() {
     if (disconnected) return null;
     try {
-      byte[] frame = transport.receive();
-      DataInputStream metaIn = new DataInputStream(new ByteArrayInputStream(frame));
-      boolean compressed = metaIn.readBoolean();
-      int length = metaIn.readInt();
+      final byte[] frame = transport.receive();
+      final DataInputStream metaIn = new DataInputStream(new ByteArrayInputStream(frame));
+      final boolean compressed = metaIn.readBoolean();
+      final int length = metaIn.readInt();
 
       byte[] data = new byte[length];
       metaIn.readFully(data);
@@ -81,10 +80,10 @@ public class Connection<T extends Transport> {
       data = decryptCipher.doFinal(data);
       if (compressed) data = ZLibCompressor.decompress(data);
 
-      InputBuffer in = InputBuffer.create(data);
-      int id = in.readInt();
+      final InputBuffer in = InputBuffer.create(data);
+      final int id = in.readInt();
       return registry.decode(id, in);
-    } catch (Exception e) {
+    } catch (final Exception e) {
       onException.accept(this, e);
       return null;
     }
@@ -106,7 +105,7 @@ public class Connection<T extends Transport> {
     return registry;
   }
 
-  public void setRegistry(PacketRegistry registry) {
+  public void setRegistry(final PacketRegistry registry) {
     this.registry = registry;
   }
 
@@ -114,7 +113,7 @@ public class Connection<T extends Transport> {
     return compressionThreshold;
   }
 
-  public void setCompressionThreshold(int compressionThreshold) {
+  public void setCompressionThreshold(final int compressionThreshold) {
     this.compressionThreshold = compressionThreshold;
   }
 
@@ -126,14 +125,14 @@ public class Connection<T extends Transport> {
     return disconnected;
   }
 
-  public void setDisconnected(boolean disconnected) {
+  public void setDisconnected(final boolean disconnected) {
     this.disconnected = disconnected;
   }
 
   public void close() {
     try {
       transport.close();
-    } catch (IOException e) {
+    } catch (final IOException e) {
       onException.accept(this, e);
     }
     disconnected = true;

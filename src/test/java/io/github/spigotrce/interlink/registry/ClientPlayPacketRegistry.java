@@ -6,20 +6,20 @@ import io.github.spigotrce.interlink.packet.*;
 public class ClientPlayPacketRegistry extends PacketRegistry {
   public final Connection connection;
 
-  public ClientPlayPacketRegistry(Connection connection) {
+  public ClientPlayPacketRegistry(final Connection connection) {
     this.connection = connection;
 
     registerPacket(DisconnectPacket.class, DisconnectPacket.CODEC, this::handle);
     registerPacket(ChatPacket.class, ChatPacket.CODEC, this::handle);
   }
 
-  public void handle(DisconnectPacket packet) {
+  public void handle(final DisconnectPacket packet) {
     System.out.println("Disconnected from server: ");
     System.out.println(packet.message());
     connection.close();
   }
 
-  public void handle(ChatPacket packet) {
+  public void handle(final ChatPacket packet) {
     System.out.println(packet.message());
   }
 }

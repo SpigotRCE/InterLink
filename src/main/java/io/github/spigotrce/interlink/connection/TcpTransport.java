@@ -8,14 +8,14 @@ public class TcpTransport implements Transport {
   private final DataOutputStream out;
   private final DataInputStream in;
 
-  public TcpTransport(Socket socket) throws IOException {
+  public TcpTransport(final Socket socket) throws IOException {
     this.socket = socket;
-    this.out = new DataOutputStream(socket.getOutputStream());
-    this.in = new DataInputStream(socket.getInputStream());
+    out = new DataOutputStream(socket.getOutputStream());
+    in = new DataInputStream(socket.getInputStream());
   }
 
   @Override
-  public void send(byte[] data) throws IOException {
+  public void send(final byte[] data) throws IOException {
     out.writeInt(data.length);
     out.write(data);
     out.flush();
@@ -23,8 +23,8 @@ public class TcpTransport implements Transport {
 
   @Override
   public byte[] receive() throws IOException {
-    int len = in.readInt();
-    byte[] buf = new byte[len];
+    final int len = in.readInt();
+    final byte[] buf = new byte[len];
     in.readFully(buf);
     return buf;
   }
