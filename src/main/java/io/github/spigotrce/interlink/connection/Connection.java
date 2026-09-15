@@ -19,10 +19,11 @@ public class Connection<T extends Transport> {
   private boolean disconnected = false;
 
   public Connection(
-    final T transport,
-    final byte[] key, final byte[] iv,
-    final BiConsumer<Connection<T>, Throwable> onException
-  ) throws Exception {
+      final T transport,
+      final byte[] key,
+      final byte[] iv,
+      final BiConsumer<Connection<T>, Throwable> onException)
+      throws Exception {
     this.transport = transport;
     this.onException = onException;
 

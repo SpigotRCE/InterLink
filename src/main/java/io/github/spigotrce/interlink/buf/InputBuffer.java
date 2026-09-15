@@ -156,7 +156,8 @@ public class InputBuffer implements ByteArrayDataInput {
     return Optional.of(reader.apply(this));
   }
 
-  public <T> List<T> readList(final IntFunction<T[]> generator, final Function<InputBuffer, T> reader) {
+  public <T> List<T> readList(
+      final IntFunction<T[]> generator, final Function<InputBuffer, T> reader) {
     final int size = readInt();
     final List<T> list = new ArrayList<>(size);
     for (int i = 0; i < size; i++) {

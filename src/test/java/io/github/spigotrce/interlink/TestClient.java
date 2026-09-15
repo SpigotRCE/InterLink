@@ -8,23 +8,29 @@ import java.util.Scanner;
 
 public final class TestClient {
   public static void main(final String[] args) throws Exception {
-    final Client testClient = new Client(Shared.host,
-      Shared.port,
-      Shared.key,
-      Shared.iv,
-      TestClient::onConnect,
-      TestClient::onDisconnect,
-      TestClient::onException);
+    final Client testClient =
+        new Client(
+            Shared.host,
+            Shared.port,
+            Shared.key,
+            Shared.iv,
+            TestClient::onConnect,
+            TestClient::onDisconnect,
+            TestClient::onException);
 
     testClient.connect();
 
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      try {
-        testClient.disconnect();
-      } catch (final Exception e) {
-        e.printStackTrace();
-      }
-    }, "Client-Shutdown"));
+    Runtime.getRuntime()
+        .addShutdownHook(
+            new Thread(
+                () -> {
+                  try {
+                    testClient.disconnect();
+                  } catch (final Exception e) {
+                    e.printStackTrace();
+                  }
+                },
+                "Client-Shutdown"));
 
     while (true) {
       final String message = input("");
@@ -50,7 +56,8 @@ public final class TestClient {
     System.out.println("Disconnected from server!");
   }
 
-  public static void onException(final Connection<TcpTransport> connection, final Throwable throwable) {
+  public static void onException(
+      final Connection<TcpTransport> connection, final Throwable throwable) {
     throwable.printStackTrace();
   }
 

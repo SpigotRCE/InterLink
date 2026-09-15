@@ -1,7 +1,6 @@
 package io.github.spigotrce.interlink.packet;
 
 import io.github.spigotrce.interlink.buf.*;
-
 import java.util.*;
 import java.util.function.Consumer;
 

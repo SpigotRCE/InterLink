@@ -18,27 +18,26 @@ public class Server {
   private final byte[] key;
   private final byte[] iv;
 
-  /**
-   * Consumers for events.
-   */
+  /** Consumers for events. */
   private final Consumer<Connection<TcpTransport>> onConnect;
+
   private final Consumer<Connection<TcpTransport>> onDisconnect;
   private final BiConsumer<Connection<TcpTransport>, Throwable> onException;
 
-  /**
-   * List of connections.
-   */
-  private final List<Connection<TcpTransport>> connections = Collections.synchronizedList(new ArrayList<>());
+  /** List of connections. */
+  private final List<Connection<TcpTransport>> connections =
+      Collections.synchronizedList(new ArrayList<>());
 
   public boolean lock;
 
-  public Server(final String host,
-    final int port,
-    final byte[] key,
-    final byte[] iv,
-    final Consumer<Connection<TcpTransport>> onConnect,
-    final Consumer<Connection<TcpTransport>> onDisconnect,
-    final BiConsumer<Connection<TcpTransport>, Throwable> onException) {
+  public Server(
+      final String host,
+      final int port,
+      final byte[] key,
+      final byte[] iv,
+      final Consumer<Connection<TcpTransport>> onConnect,
+      final Consumer<Connection<TcpTransport>> onDisconnect,
+      final BiConsumer<Connection<TcpTransport>, Throwable> onException) {
     this.host = host;
     this.port = port;
     this.key = key;
@@ -55,17 +54,19 @@ public class Server {
 
       while (lock) {
         final Socket clientSocket = serverSocket.accept();
-        final Connection<TcpTransport> connection = new Connection<TcpTransport>(new TcpTransport(clientSocket), key, iv, onException);
+        final Connection<TcpTransport> connection =
+            new Connection<TcpTransport>(new TcpTransport(clientSocket), key, iv, onException);
         connections.add(connection);
         onConnect.accept(connection);
 
-        new Thread(() -> {
-          while (!clientSocket.isClosed() && lock) {
-            final Packet<?> packet = connection.read();
-            connection.getRegistry().handle(packet);
-          }
-
-        }).start();
+        new Thread(
+                () -> {
+                  while (!clientSocket.isClosed() && lock) {
+                    final Packet<?> packet = connection.read();
+                    connection.getRegistry().handle(packet);
+                  }
+                })
+            .start();
       }
     }
   }

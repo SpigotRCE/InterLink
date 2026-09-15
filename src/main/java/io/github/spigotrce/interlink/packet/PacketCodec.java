@@ -7,19 +7,20 @@ import java.util.function.*;
  * A Packet codec which is used to parse reader and writer methods.
  *
  * @param <T> Type of the packet
- *
  * @author SpigotRCE
  */
 public class PacketCodec<T> {
   private final Function<InputBuffer, T> reader;
   private final BiConsumer<T, OutputBuffer> writer;
 
-  private PacketCodec(final Function<InputBuffer, T> reader, final BiConsumer<T, OutputBuffer> writer) {
+  private PacketCodec(
+      final Function<InputBuffer, T> reader, final BiConsumer<T, OutputBuffer> writer) {
     this.reader = reader;
     this.writer = writer;
   }
 
-  public static <T> PacketCodec<T> of(final Function<InputBuffer, T> reader, final BiConsumer<T, OutputBuffer> writer) {
+  public static <T> PacketCodec<T> of(
+      final Function<InputBuffer, T> reader, final BiConsumer<T, OutputBuffer> writer) {
     return new PacketCodec<>(reader, writer);
   }
 

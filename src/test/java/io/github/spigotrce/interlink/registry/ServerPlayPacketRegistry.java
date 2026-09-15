@@ -24,12 +24,12 @@ public class ServerPlayPacketRegistry extends PacketRegistry {
     String username = "";
     for (final Connection namedConnection : TestServer.namedConnections.values()) {
       if (namedConnection == connection) {
-        username = TestServer.namedConnections.entrySet()
-          .stream()
-          .filter(entry -> entry.getValue() == connection)
-          .map(Entry::getKey)
-          .findFirst()
-          .orElse("Unknown");
+        username =
+            TestServer.namedConnections.entrySet().stream()
+                .filter(entry -> entry.getValue() == connection)
+                .map(Entry::getKey)
+                .findFirst()
+                .orElse("Unknown");
       }
     }
 
@@ -37,8 +37,11 @@ public class ServerPlayPacketRegistry extends PacketRegistry {
 
     System.out.println(message);
 
-    TestServer.namedConnections.values().forEach(conn -> {
-      conn.send(new ChatPacket(message));
-    });
+    TestServer.namedConnections
+        .values()
+        .forEach(
+            conn -> {
+              conn.send(new ChatPacket(message));
+            });
   }
 }

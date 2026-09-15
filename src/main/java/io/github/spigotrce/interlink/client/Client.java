@@ -18,13 +18,14 @@ public class Client {
   public boolean lock;
   private Connection<TcpTransport> connection;
 
-  public Client(final String host,
-    final int port,
-    final byte[] key,
-    final byte[] iv,
-    final Consumer<Connection<TcpTransport>> onConnect,
-    final Consumer<Connection<TcpTransport>> onDisconnect,
-    final BiConsumer<Connection<TcpTransport>, Throwable> onException) {
+  public Client(
+      final String host,
+      final int port,
+      final byte[] key,
+      final byte[] iv,
+      final Consumer<Connection<TcpTransport>> onConnect,
+      final Consumer<Connection<TcpTransport>> onDisconnect,
+      final BiConsumer<Connection<TcpTransport>, Throwable> onException) {
     this.host = host;
     this.port = port;
     this.key = key;
@@ -46,18 +47,21 @@ public class Client {
 
     lock = true;
 
-    new Thread(() -> {
-      while (lock) {
-        final Packet<?> packet = connection.read();
-        if (packet == null) {
-          if (!connection.isDisconnected()) {
-            disconnect();
-          }
-          break;
-        }
-        connection.getRegistry().handle(packet);
-      }
-    }, "Client-Receiver").start();
+    new Thread(
+            () -> {
+              while (lock) {
+                final Packet<?> packet = connection.read();
+                if (packet == null) {
+                  if (!connection.isDisconnected()) {
+                    disconnect();
+                  }
+                  break;
+                }
+                connection.getRegistry().handle(packet);
+              }
+            },
+            "Client-Receiver")
+        .start();
   }
 
   public void disconnect() {

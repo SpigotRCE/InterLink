@@ -11,13 +11,15 @@ public final class TestServer {
   public static final HashMap<String, Connection<TcpTransport>> namedConnections = new HashMap<>();
 
   public static void main(final String[] args) throws Exception {
-    final Server server = new Server(Shared.host,
-      Shared.port,
-      Shared.key,
-      Shared.iv,
-      TestServer::onConnect,
-      TestServer::onDisconnect,
-      TestServer::onException);
+    final Server server =
+        new Server(
+            Shared.host,
+            Shared.port,
+            Shared.key,
+            Shared.iv,
+            TestServer::onConnect,
+            TestServer::onDisconnect,
+            TestServer::onException);
 
     server.start();
   }
@@ -30,12 +32,12 @@ public final class TestServer {
     connections.remove(connection);
   }
 
-  public static void onException(final Connection<TcpTransport> connection, final Throwable throwable) {
+  public static void onException(
+      final Connection<TcpTransport> connection, final Throwable throwable) {
     throwable.printStackTrace();
     if (!connection.getTransport().getSocket().isClosed()) {
       connection.send(new DisconnectPacket("Exception: " + throwable.getMessage()));
     }
-
 
     connections.remove(connection);
   }

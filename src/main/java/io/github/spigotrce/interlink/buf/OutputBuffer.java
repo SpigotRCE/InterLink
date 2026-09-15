@@ -140,7 +140,8 @@ public class OutputBuffer implements ByteArrayDataOutput {
   }
 
   public void writeNestedPacket(final Packet<?> packet) {
-    @SuppressWarnings("unchecked") final PacketCodec<Packet<?>> codec = (PacketCodec<Packet<?>>) packet.getCodec();
+    @SuppressWarnings("unchecked")
+    final PacketCodec<Packet<?>> codec = (PacketCodec<Packet<?>>) packet.getCodec();
     codec.write(packet, this);
   }
 
