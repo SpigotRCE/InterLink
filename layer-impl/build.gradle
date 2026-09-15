@@ -1,0 +1,4 @@
+dependencies {
+    api project(':layer')
+    api project(':compressor')
+}

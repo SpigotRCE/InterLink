@@ -1,15 +1,22 @@
-plugins {
-    id 'java'
+allprojects {
+    group = 'io.github.spigotrce'
+    version = '1.0'
 }
 
-group = 'io.github.spigotrce'
-version = '1.0'
+subprojects {
+    apply plugin: 'java-library'
 
-repositories {
-    mavenCentral()
-}
+    repositories {
+        mavenCentral()
+    }
 
-dependencies {
-    implementation 'com.google.guava:guava:33.4.8-jre'
-    implementation 'org.java-websocket:Java-WebSocket:1.6.0'
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+    }
 }

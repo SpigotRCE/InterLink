@@ -1,0 +1,12 @@
+dependencies {
+    implementation project(':buffer')
+    implementation project(':compressor')
+    implementation project(':compressor-impl')
+    implementation project(':layer')
+    implementation project(':layer-impl')
+    implementation project(':transport')
+    implementation project(':transport-impl')
+    implementation project(':packet')
+    implementation project(':server')
+    implementation project(':client')
+}

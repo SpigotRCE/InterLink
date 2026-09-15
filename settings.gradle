@@ -1,2 +1,13 @@
 rootProject.name = 'InterLink'
 
+include 'buffer'
+include 'compressor'
+include 'compressor-impl'
+include 'layer'
+include 'layer-impl'
+include 'transport'
+include 'transport-impl'
+include 'packet'
+include 'server'
+include 'client'
+include 'examples'
