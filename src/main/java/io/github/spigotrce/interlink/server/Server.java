@@ -21,9 +21,6 @@ public class Server<T extends Transport<T>> {
   private final String host;
   private final int port;
 
-  private final byte[] key;
-  private final byte[] iv;
-
   /** Consumers for events. */
   private final Consumer<Connection<T>> onConnect;
 
@@ -42,16 +39,12 @@ public class Server<T extends Transport<T>> {
       final Supplier<T> transportFactory,
       final String host,
       final int port,
-      final byte[] key,
-      final byte[] iv,
       final Consumer<Connection<T>> onConnect,
       final Consumer<Connection<T>> onDisconnect,
       final BiConsumer<Connection<T>, Throwable> onException) {
     this.transportFactory = transportFactory;
     this.host = host;
     this.port = port;
-    this.key = key;
-    this.iv = iv;
     this.onConnect = onConnect;
     this.onDisconnect = onDisconnect;
     this.onException = onException;
@@ -73,7 +66,7 @@ public class Server<T extends Transport<T>> {
         throw e;
       }
 
-      final Connection<T> connection = new Connection<>(transport, key, iv, onException);
+      final Connection<T> connection = new Connection<>(transport, onException);
       connections.add(connection);
       onConnect.accept(connection);
 
@@ -116,14 +109,6 @@ public class Server<T extends Transport<T>> {
 
   public int getPort() {
     return port;
-  }
-
-  public byte[] getKey() {
-    return key;
-  }
-
-  public byte[] getIv() {
-    return iv;
   }
 
   public Consumer<Connection<T>> getOnConnect() {

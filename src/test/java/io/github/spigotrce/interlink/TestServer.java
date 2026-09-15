@@ -2,6 +2,8 @@ package io.github.spigotrce.interlink;
 
 import io.github.spigotrce.interlink.connection.Connection;
 import io.github.spigotrce.interlink.connection.TcpTransport;
+import io.github.spigotrce.interlink.layer.CompressionLayer;
+import io.github.spigotrce.interlink.layer.EncryptionLayer;
 import io.github.spigotrce.interlink.packet.DisconnectPacket;
 import io.github.spigotrce.interlink.registry.ServerLoginPacketRegistry;
 import io.github.spigotrce.interlink.server.Server;
@@ -18,8 +20,6 @@ public final class TestServer {
             TcpTransport::new,
             Shared.host,
             Shared.port,
-            Shared.key,
-            Shared.iv,
             TestServer::onConnect,
             TestServer::onDisconnect,
             TestServer::onException);
@@ -28,6 +28,8 @@ public final class TestServer {
   }
 
   public static void onConnect(final Connection<TcpTransport> connection) {
+    connection.getPipeline().addFirst("encryption", new EncryptionLayer(Shared.key));
+    connection.getPipeline().addLast("compression", new CompressionLayer());
     connection.setRegistry(new ServerLoginPacketRegistry(connection));
   }
 

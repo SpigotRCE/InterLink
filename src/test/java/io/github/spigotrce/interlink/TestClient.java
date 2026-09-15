@@ -3,6 +3,8 @@ package io.github.spigotrce.interlink;
 import io.github.spigotrce.interlink.client.Client;
 import io.github.spigotrce.interlink.connection.Connection;
 import io.github.spigotrce.interlink.connection.TcpTransport;
+import io.github.spigotrce.interlink.layer.CompressionLayer;
+import io.github.spigotrce.interlink.layer.EncryptionLayer;
 import io.github.spigotrce.interlink.packet.ChatPacket;
 import io.github.spigotrce.interlink.packet.HandshakePacket;
 import io.github.spigotrce.interlink.registry.ClientLoginPacketRegistry;
@@ -15,8 +17,6 @@ public final class TestClient {
             TcpTransport::new,
             Shared.host,
             Shared.port,
-            Shared.key,
-            Shared.iv,
             TestClient::onConnect,
             TestClient::onDisconnect,
             TestClient::onException);
@@ -51,6 +51,8 @@ public final class TestClient {
   }
 
   public static void onConnect(final Connection<TcpTransport> connection) {
+    connection.getPipeline().addFirst("encryption", new EncryptionLayer(Shared.key));
+    connection.getPipeline().addLast("compression", new CompressionLayer());
     connection.setRegistry(new ClientLoginPacketRegistry(connection));
     connection.send(new HandshakePacket(input("Enter username: ")));
   }
