@@ -1,6 +1,6 @@
 allprojects {
-    group = 'io.github.spigotrce'
-    version = '1.0'
+    group = project.group
+    version = project.version
 }
 
 subprojects {
@@ -12,7 +12,7 @@ subprojects {
 
     java {
         toolchain {
-            languageVersion = JavaLanguageVersion.of(21)
+            languageVersion = JavaLanguageVersion.of(project.javaVersion)
         }
     }
 
@@ -25,6 +25,6 @@ subprojects {
     }
 
     dependencies {
-        testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+        testImplementation "org.junit.jupiter:junit-jupiter:${project.junitVersion}"
     }
 }

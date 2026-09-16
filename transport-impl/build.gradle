@@ -1,4 +1,4 @@
 dependencies {
     api project(':transport')
-    api 'org.java-websocket:Java-WebSocket:1.6.0'
+    api "org.java-websocket:Java-WebSocket:${project.javaWebSocketVersion}"
 }
