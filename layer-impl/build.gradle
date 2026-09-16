@@ -2,4 +2,7 @@ dependencies {
     api project(':layer')
     api project(':compressor')
     api project(':cipher')
+
+    testImplementation project(':compressor-impl')
+    testImplementation project(':cipher-impl')
 }
