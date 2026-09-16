@@ -144,18 +144,6 @@ public class ConnectionTest {
   }
 
   @Test
-  public void compressionThresholdRoundTripsThroughSharedState() {
-    final FakeTransport transport = new FakeTransport();
-    final Connection<FakeTransport> connection =
-        new Connection<>(transport, (conn, t) -> {});
-    assertEquals(0, connection.getCompressionThreshold());
-
-    connection.setCompressionThreshold(512);
-    assertEquals(512, connection.getCompressionThreshold());
-    assertEquals(512, connection.getPipeline().sharedState().get("compression.threshold"));
-  }
-
-  @Test
   public void closeTransitionsAndClosesTransport() throws Exception {
     final FakeTransport transport = new FakeTransport();
     final Connection<FakeTransport> connection =

@@ -35,24 +35,23 @@ import java.io.IOException;
  * </ul>
  */
 public class CompressionLayer implements Layer {
-  public static final String SHARED_THRESHOLD = "compression.threshold";
 
   private final Compressor compressor;
-  private final int defaultThreshold;
+  private final int threshold;
   private final int maxDecompressedLength;
 
   public CompressionLayer(final Compressor compressor) {
     this(compressor, 0);
   }
 
-  public CompressionLayer(final Compressor compressor, final int defaultThreshold) {
-    this(compressor, defaultThreshold, 8 * 1024 * 1024);
+  public CompressionLayer(final Compressor compressor, final int threshold) {
+    this(compressor, threshold, 8 * 1024 * 1024);
   }
 
   public CompressionLayer(
-      final Compressor compressor, final int defaultThreshold, final int maxDecompressedLength) {
+      final Compressor compressor, final int threshold, final int maxDecompressedLength) {
     this.compressor = compressor;
-    this.defaultThreshold = defaultThreshold;
+    this.threshold = threshold;
     this.maxDecompressedLength = maxDecompressedLength;
   }
 
@@ -88,7 +87,6 @@ public class CompressionLayer implements Layer {
 
   @Override
   public void onOutbound(final byte[] data, final LayerContext ctx) throws LayerException {
-    final int threshold = threshold(ctx);
     if (data.length == 0 || data.length < threshold) {
       ctx.fireOutbound(withFlag(data, false));
       return;
@@ -106,14 +104,6 @@ public class CompressionLayer implements Layer {
       return;
     }
     ctx.fireOutbound(withFlag(data, false));
-  }
-
-  private int threshold(final LayerContext ctx) {
-    final Object stored = ctx.sharedState().get(SHARED_THRESHOLD);
-    if (stored instanceof final Integer value) {
-      return value;
-    }
-    return defaultThreshold;
   }
 
   private static byte[] withFlag(final byte[] data, final boolean compressed) {

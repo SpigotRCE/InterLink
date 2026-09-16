@@ -1,6 +1,8 @@
 package io.github.spigotrce.interlink.registry;
 
+import io.github.spigotrce.interlink.compression.ZLibCompressor;
 import io.github.spigotrce.interlink.connection.Connection;
+import io.github.spigotrce.interlink.layer.impl.CompressionLayer;
 import io.github.spigotrce.interlink.packet.DisconnectPacket;
 import io.github.spigotrce.interlink.packet.HandshakePacket;
 import io.github.spigotrce.interlink.packet.LoginSuccessPacket;
@@ -25,6 +27,10 @@ public class ClientLoginPacketRegistry extends PacketRegistry {
   public void handle(final LoginSuccessPacket packet) {
     System.out.println("Successfully logged in to server");
     connection.setRegistry(new ClientPlayPacketRegistry(connection));
-    connection.setCompressionThreshold(packet.compressionThreshold());
+    connection
+        .getPipeline()
+        .addLast(
+            "compressor",
+            new CompressionLayer(new ZLibCompressor(), packet.compressionThreshold()));
   }
 }

@@ -97,17 +97,6 @@ public class Connection<T extends Transport<T>> {
     this.registry = registry;
   }
 
-  private static final String COMPRESSION_THRESHOLD = "compression.threshold";
-
-  public int getCompressionThreshold() {
-    final Object stored = pipeline.sharedState().get(COMPRESSION_THRESHOLD);
-    return stored instanceof final Integer value ? value : 0;
-  }
-
-  public void setCompressionThreshold(final int compressionThreshold) {
-    pipeline.sharedState().put(COMPRESSION_THRESHOLD, compressionThreshold);
-  }
-
   public BiConsumer<Connection<T>, Throwable> getOnException() {
     return onException;
   }
