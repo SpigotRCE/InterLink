@@ -108,7 +108,7 @@ connection.getPipeline().addLast("compression", new CompressionLayer(new ZLibCom
 
 | Module | What it does |
 |---|---|
-| `buffer` | Binary read/write primitives on top of `ByteArrayOutputStream` |
+| `buffer` | Binary read/write primitives on top of Google's Guava ByteBuffers |
 | `packet` | `Packet`, `PacketCodec`, `PacketRegistry` - the protocol layer |
 | `transport` | `Transport` interface and `Connection` class |
 | `transport-impl` | `TcpTransport` and `WsTransport` |
