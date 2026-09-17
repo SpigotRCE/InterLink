@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import xyz.spigotrce.interlink.packet.Packet;
+import xyz.spigotrce.interlink.packet.PacketCodec;
 
 public class BufferTest {
 
@@ -160,6 +162,33 @@ public class BufferTest {
     final InputBuffer in = InputBuffer.create(out.toByteArray());
     assertEquals(42, in.readInt());
     assertThrows(IllegalStateException.class, in::readInt);
+  }
+
+  @Test
+  public void nestedPacketRoundTrip() {
+    final OutputBuffer out = OutputBuffer.create();
+    out.writeNestedPacket(new TestPacket(1337));
+
+    final InputBuffer in = InputBuffer.create(out.toByteArray());
+    assertEquals(new TestPacket(1337), in.readNestedPacket(TestPacket.CODEC));
+  }
+
+  private record TestPacket(int value) implements Packet<TestPacket> {
+    private static final PacketCodec<TestPacket> CODEC =
+        PacketCodec.of(TestPacket::new, TestPacket::write);
+
+    private TestPacket(final InputBuffer in) {
+      this(in.readInt());
+    }
+
+    private void write(final OutputBuffer out) {
+      out.writeInt(value);
+    }
+
+    @Override
+    public PacketCodec<TestPacket> getCodec() {
+      return CODEC;
+    }
   }
 
   private enum Color {

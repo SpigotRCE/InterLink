@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiConsumer;
+import xyz.spigotrce.interlink.packet.Packet;
+import xyz.spigotrce.interlink.packet.PacketCodec;
 
 public class OutputBuffer implements ByteArrayDataOutput {
   final DataOutput output;
@@ -171,5 +173,10 @@ public class OutputBuffer implements ByteArrayDataOutput {
       writeBoolean(true);
       writer.accept(this, value);
     }
+  }
+
+  public <T extends Packet<T>> void writeNestedPacket(final Packet<T> packet) {
+    final PacketCodec<T> codec = (PacketCodec<T>) packet.getCodec();
+    codec.write((T) packet, this);
   }
 }

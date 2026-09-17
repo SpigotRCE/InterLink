@@ -13,6 +13,8 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import org.jspecify.annotations.Nullable;
+import xyz.spigotrce.interlink.packet.Packet;
+import xyz.spigotrce.interlink.packet.PacketCodec;
 
 public class InputBuffer implements ByteArrayDataInput {
   final DataInput input;
@@ -181,6 +183,10 @@ public class InputBuffer implements ByteArrayDataInput {
 
   public UUID readUUID() {
     return new UUID(readLong(), readLong());
+  }
+
+  public <T extends Packet<?>> T readNestedPacket(final PacketCodec<T> codec) {
+    return codec.read(this);
   }
 
   public <T> T readNullable(final Function<InputBuffer, T> reader) {
