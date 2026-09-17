@@ -16,6 +16,10 @@ subprojects {
         }
     }
 
+    tasks.withType(Jar).configureEach {
+        archiveBaseName = "interlink-${project.name}"
+    }
+
     tasks.withType(JavaCompile).configureEach {
         options.encoding = 'UTF-8'
     }

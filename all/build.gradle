@@ -1,0 +1,14 @@
+dependencies {
+    rootProject.subprojects
+        .findAll { it != project && it.name != 'examples' }
+        .each { implementation it }
+}
+
+jar {
+    dependsOn configurations.runtimeClasspath
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+}
