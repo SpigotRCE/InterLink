@@ -6,6 +6,7 @@ import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
@@ -142,12 +143,12 @@ public class OutputBuffer implements ByteArrayDataOutput {
     writeInt(instance.ordinal());
   }
 
-  public <T> void writeOptional(final T value, final BiConsumer<OutputBuffer, T> writer) {
-    if (value == null) {
-      writeBoolean(false);
-    } else {
+  public <T> void writeOptional(final Optional<T> value, final BiConsumer<OutputBuffer, T> writer) {
+    if (value.isPresent()) {
       writeBoolean(true);
-      writer.accept(this, value);
+      writer.accept(this, value.get());
+    } else {
+      writeBoolean(false);
     }
   }
 

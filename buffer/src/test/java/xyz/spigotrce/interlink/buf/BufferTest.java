@@ -95,8 +95,8 @@ public class BufferTest {
   @Test
   public void optionalRoundTrip() {
     final OutputBuffer out = OutputBuffer.create();
-    out.writeOptional(null, OutputBuffer::writeUTF);
-    out.writeOptional("present", OutputBuffer::writeUTF);
+    out.writeOptional(Optional.empty(), OutputBuffer::writeUTF);
+    out.writeOptional(Optional.of("present"), OutputBuffer::writeUTF);
 
     final InputBuffer in = InputBuffer.create(out.toByteArray());
     assertEquals(Optional.empty(), in.readOptional(InputBuffer::readUTF));
