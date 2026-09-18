@@ -33,6 +33,7 @@ public class OutputBuffer implements ByteArrayDataOutput {
     }
   }
 
+  @Deprecated
   public void write(final byte[] b) {
     try {
       output.write(b);
@@ -41,12 +42,18 @@ public class OutputBuffer implements ByteArrayDataOutput {
     }
   }
 
+  @Deprecated
   public void write(final byte[] b, final int off, final int len) {
     try {
       output.write(b, off, len);
     } catch (final IOException impossible) {
       throw new AssertionError(impossible);
     }
+  }
+
+  public void writeByteArray(final byte[] b) {
+    writeInt(b.length);
+    write(b);
   }
 
   public void writeBoolean(final boolean v) {

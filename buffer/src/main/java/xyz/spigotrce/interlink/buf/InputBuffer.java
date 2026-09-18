@@ -27,6 +27,7 @@ public class InputBuffer implements ByteArrayDataInput {
     return new InputBuffer(new ByteArrayInputStream(data));
   }
 
+  @Deprecated
   public void readFully(final byte[] b) {
     try {
       input.readFully(b);
@@ -35,9 +36,21 @@ public class InputBuffer implements ByteArrayDataInput {
     }
   }
 
+  @Deprecated
   public void readFully(final byte[] b, final int off, final int len) {
     try {
       input.readFully(b, off, len);
+    } catch (final IOException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  public byte[] readByteArray() {
+    try {
+      final int len = readInt();
+      final byte[] b = new byte[len];
+      input.readFully(b);
+      return b;
     } catch (final IOException e) {
       throw new IllegalStateException(e);
     }

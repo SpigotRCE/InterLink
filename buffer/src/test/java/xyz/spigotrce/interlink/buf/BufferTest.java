@@ -54,17 +54,12 @@ public class BufferTest {
   public void rawBytesRoundTrip() {
     final OutputBuffer out = OutputBuffer.create();
     final byte[] data = {0, 1, 2, 3, 4, 5, 6, 7, -1, -2, -3};
-    out.write(data);
-    out.write(data, 2, 4);
+    out.writeByteArray(data);
     out.write(-42);
 
     final InputBuffer in = InputBuffer.create(out.toByteArray());
-    final byte[] first = new byte[data.length];
-    in.readFully(first);
+    final byte[] first = in.readByteArray();
     assertArrayEquals(data, first);
-    final byte[] second = new byte[4];
-    in.readFully(second);
-    assertArrayEquals(new byte[] {2, 3, 4, 5}, second);
     assertEquals(-42, in.readByte());
   }
 
