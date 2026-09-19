@@ -36,7 +36,8 @@ public class ServerTest {
               connected.countDown();
             },
             conn -> disconnected.countDown(),
-            (conn, t) -> {});
+            (conn, t) -> {},
+            () -> {});
 
     final Thread serverThread =
         new Thread(
@@ -116,7 +117,8 @@ public class ServerTest {
               connected.countDown();
             },
             conn -> disconnected.countDown(),
-            (conn, t) -> {});
+            (conn, t) -> {},
+            () -> {});
 
     final Thread serverThread =
         new Thread(

@@ -27,6 +27,9 @@ public class Server<T extends Transport<T>> {
   private final Consumer<Connection<T>> onDisconnect;
   private final BiConsumer<Connection<T>, Throwable> onException;
 
+  /** Invoked once, right after the listener has bound to the host and port. */
+  private final Runnable onStart;
+
   /** List of connections. */
   private final List<Connection<T>> connections =
       Collections.synchronizedList(new ArrayList<>());
@@ -41,19 +44,22 @@ public class Server<T extends Transport<T>> {
       final int port,
       final Consumer<Connection<T>> onConnect,
       final Consumer<Connection<T>> onDisconnect,
-      final BiConsumer<Connection<T>, Throwable> onException) {
+      final BiConsumer<Connection<T>, Throwable> onException,
+      final Runnable onStart) {
     this.transportFactory = transportFactory;
     this.host = host;
     this.port = port;
     this.onConnect = onConnect;
     this.onDisconnect = onDisconnect;
     this.onException = onException;
+    this.onStart = onStart;
   }
 
   public void start() throws Exception {
     lock = true;
     listener = transportFactory.get();
     listener.bind(host, port);
+    onStart.run();
 
     while (lock) {
       final T transport;

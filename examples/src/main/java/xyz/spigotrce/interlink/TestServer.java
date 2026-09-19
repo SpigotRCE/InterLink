@@ -1,5 +1,7 @@
 package xyz.spigotrce.interlink;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import xyz.spigotrce.interlink.cipher.impl.AesCfbCipher;
 import xyz.spigotrce.interlink.connection.Connection;
 import xyz.spigotrce.interlink.connection.TcpTransport;
@@ -7,8 +9,6 @@ import xyz.spigotrce.interlink.layer.impl.EncryptionLayer;
 import xyz.spigotrce.interlink.packet.DisconnectPacket;
 import xyz.spigotrce.interlink.registry.ServerLoginPacketRegistry;
 import xyz.spigotrce.interlink.server.Server;
-import java.util.ArrayList;
-import java.util.HashMap;
 
 public final class TestServer {
   public static final ArrayList<Connection<TcpTransport>> connections = new ArrayList<>();
@@ -22,7 +22,8 @@ public final class TestServer {
             Shared.port,
             TestServer::onConnect,
             TestServer::onDisconnect,
-            TestServer::onException);
+            TestServer::onException,
+            () -> System.out.println("Server is listening on tcp://" + Shared.host + ":" + Shared.port));
 
     server.start();
   }
