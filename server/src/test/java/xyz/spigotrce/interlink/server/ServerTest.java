@@ -10,6 +10,7 @@ import xyz.spigotrce.interlink.connection.TcpTransport;
 import xyz.spigotrce.interlink.packet.Packet;
 import xyz.spigotrce.interlink.packet.PacketCodec;
 import xyz.spigotrce.interlink.packet.PacketRegistry;
+import xyz.spigotrce.interlink.packet.PacketType;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.CountDownLatch;
@@ -75,10 +76,10 @@ public class ServerTest {
     }
   }
 
-  private static PacketRegistry serverRegistry(final AtomicInteger handledSeq) {
-    final PacketRegistry registry = new PacketRegistry();
+  private static PacketRegistry<TestPackets> serverRegistry(final AtomicInteger handledSeq) {
+    final PacketRegistry<TestPackets> registry = new PacketRegistry<>(TestPackets.class);
     registry.registerPacket(
-        PingPacket.class, PingPacket.CODEC, packet -> handledSeq.set(packet.seq()));
+        TestPackets.PING, (PingPacket packet) -> handledSeq.set(packet.seq()));
     return registry;
   }
 
@@ -94,10 +95,8 @@ public class ServerTest {
     throw new IllegalStateException("server did not become connectable");
   }
 
-  private static PacketRegistry clientRegistry() {
-    final PacketRegistry registry = new PacketRegistry();
-    registry.registerPacket(PingPacket.class, PingPacket.CODEC);
-    return registry;
+  private static PacketRegistry<TestPackets> clientRegistry() {
+    return new PacketRegistry<>(TestPackets.class);
   }
 
   @Test
@@ -156,6 +155,28 @@ public class ServerTest {
     @Override
     public PacketCodec<PingPacket> getCodec() {
       return CODEC;
+    }
+  }
+
+  private enum TestPackets implements PacketType {
+    PING(PingPacket.class, PingPacket.CODEC);
+
+    private final Class<? extends Packet<?>> packetClass;
+    private final PacketCodec<?> codec;
+
+    TestPackets(final Class<? extends Packet<?>> packetClass, final PacketCodec<?> codec) {
+      this.packetClass = packetClass;
+      this.codec = codec;
+    }
+
+    @Override
+    public Class<? extends Packet<?>> packetClass() {
+      return packetClass;
+    }
+
+    @Override
+    public PacketCodec<?> codec() {
+      return codec;
     }
   }
 }

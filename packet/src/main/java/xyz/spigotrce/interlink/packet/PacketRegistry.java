@@ -1,60 +1,73 @@
 package xyz.spigotrce.interlink.packet;
 
-import xyz.spigotrce.interlink.buf.InputBuffer;
-import xyz.spigotrce.interlink.buf.OutputBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import xyz.spigotrce.interlink.buf.InputBuffer;
+import xyz.spigotrce.interlink.buf.OutputBuffer;
 
 /**
  * A packet registry holds all packets for the current phase of the network. A packet registry
  * should be the same for both sides of a connection but can have different handlers. A packet
  * handler has methods for handling a packet when it is received.
  *
+ * <p>Packets are registered automatically from a shared {@link PacketType} enum, in its declaration
+ * order. The ordinal of each constant becomes the packet id. Handlers are then attached per
+ * constant via {@link #registerPacket(Enum, Consumer)}.
+ *
+ * @param <E> the shared packet enum type
  * @author SpigotRCE
  */
-public class PacketRegistry {
+public class PacketRegistry<E extends Enum<E> & PacketType> {
   private final List<PacketEntry<? extends Packet<?>>> packets = new ArrayList<>();
   private final Map<Class<?>, Integer> idCache = new HashMap<>();
 
   /**
-   * Method to register a packet. When a packet is registered, the max packet id is incremented and
-   * a {{@link @PacketEntry}} is registered.
+   * Creates a registry that registers every constant of the given enum in declaration order. Each
+   * constant's ordinal is used as its packet id.
    *
-   * @param packetClass {@link Class} of the packet
-   * @param codec {@link PacketCodec} of the packet
-   * @param handler {@link Consumer} of the packet
-   * @param <T> type of the packet
+   * @param packetEnum {@link Class} of the shared packet enum
    */
-  public <T extends Packet<?>> void registerPacket(
-      final Class<T> packetClass, final PacketCodec<T> codec, final Consumer<T> handler) {
-    idCache.put(packetClass, packets.size());
-    packets.add(new PacketEntry<>(packetClass, codec, handler));
+  public PacketRegistry(final Class<E> packetEnum) {
+    for (final E type : packetEnum.getEnumConstants()) {
+      registerPacket(
+          type.packetClass(),
+          type.codec(),
+          (packet) -> {
+            throw new IllegalArgumentException(
+                "No handler registered for packet: " + type.packetClass().getName());
+          });
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private <T extends Packet<?>> void registerPacket(
+      final Class<? extends Packet<?>> packetClass,
+      final PacketCodec<?> codec,
+      final Consumer<? extends Packet<?>> handler) {
+    final Class<T> clazz = (Class<T>) packetClass;
+    final PacketCodec<T> typedCodec = (PacketCodec<T>) codec;
+    final Consumer<T> typedHandler = (Consumer<T>) handler;
+    idCache.put(clazz, packets.size());
+    packets.add(new PacketEntry<>(clazz, typedCodec, typedHandler));
   }
 
   /**
-   * Method to register a packet with no handler, and hence this packet is only one way i.e. it can
-   * only be sent from the side it is registered. If the packet is received, it'll throw a {@link
-   * IllegalArgumentException}.
+   * Attaches a handler to the given packet enum constant. If no handler is registered for a packet,
+   * receiving it throws an {@link IllegalArgumentException}.
    *
-   * @param packetClass {@link Class} of the packet
-   * @param codec {@link PacketCodec} of the packet
+   * @param packetType the packet enum constant
+   * @param handler {@link Consumer} of the packet
    * @param <T> type of the packet
    */
-  public <T extends Packet<?>> void registerPacket(
-      final Class<T> packetClass, final PacketCodec<T> codec) {
-    idCache.put(packetClass, packets.size());
-    packets.add(
-        new PacketEntry<>(
-            packetClass,
-            codec,
-            (packet) -> {
-              throw new IllegalArgumentException(
-                  "No handler registered for packet: " + packetClass.getName());
-            }));
+  public <T extends Packet<?>> void registerPacket(final E packetType, final Consumer<T> handler) {
+    final int id = packetType.ordinal();
+    @SuppressWarnings("unchecked")
+    final PacketEntry<T> entry = (PacketEntry<T>) packets.get(id);
+    packets.set(id, new PacketEntry<>(entry.clazz(), entry.codec(), handler));
   }
 
   /**
@@ -79,7 +92,7 @@ public class PacketRegistry {
   }
 
   /**
-   * Decoded the {@link Packet} from a {@link InputBuffer} using the packet codec.
+   * Decodes the {@link Packet} from a {@link InputBuffer} using the packet codec.
    *
    * @param id the packet id
    * @param in {@link InputBuffer} to decode from
@@ -91,7 +104,7 @@ public class PacketRegistry {
   }
 
   /**
-   * Method to handle the packet.
+   * Handles the packet by dispatching it to the handler registered for its id.
    *
    * @param packet {@link Packet} packet to be handled.
    */

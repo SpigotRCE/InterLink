@@ -10,6 +10,7 @@ import xyz.spigotrce.interlink.buf.OutputBuffer;
 import xyz.spigotrce.interlink.packet.Packet;
 import xyz.spigotrce.interlink.packet.PacketCodec;
 import xyz.spigotrce.interlink.packet.PacketRegistry;
+import xyz.spigotrce.interlink.packet.PacketType;
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -41,13 +42,11 @@ public class ConnectionTest {
     assertNull(error.get());
   }
 
-  private static PacketRegistry registry() {
-    final PacketRegistry registry = new PacketRegistry();
-    registry.registerPacket(EchoPacket.class, EchoPacket.CODEC);
-    return registry;
+  private static PacketRegistry<TestPackets> registry() {
+    return new PacketRegistry<>(TestPackets.class);
   }
 
-  private static byte[] encode(final PacketRegistry registry, final Packet<?> packet) {
+  private static byte[] encode(final PacketRegistry<?> registry, final Packet<?> packet) {
     final OutputBuffer out = OutputBuffer.create();
     out.writeInt(registry.getId(packet));
     registry.encode(packet, out);
@@ -244,6 +243,28 @@ public class ConnectionTest {
     @Override
     public PacketCodec<Unregistered> getCodec() {
       return CODEC;
+    }
+  }
+
+  private enum TestPackets implements PacketType {
+    ECHO(EchoPacket.class, EchoPacket.CODEC);
+
+    private final Class<? extends Packet<?>> packetClass;
+    private final PacketCodec<?> codec;
+
+    TestPackets(final Class<? extends Packet<?>> packetClass, final PacketCodec<?> codec) {
+      this.packetClass = packetClass;
+      this.codec = codec;
+    }
+
+    @Override
+    public Class<? extends Packet<?>> packetClass() {
+      return packetClass;
+    }
+
+    @Override
+    public PacketCodec<?> codec() {
+      return codec;
     }
   }
 }

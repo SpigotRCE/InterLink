@@ -14,10 +14,8 @@ import org.junit.jupiter.api.Test;
 public class PacketRegistryTest {
 
   @Test
-  public void idsAssignedInRegistrationOrder() {
-    final PacketRegistry registry = new PacketRegistry();
-    registry.registerPacket(Alpha.class, Alpha.CODEC);
-    registry.registerPacket(Beta.class, Beta.CODEC);
+  public void idsAssignedInEnumOrder() {
+    final PacketRegistry<TestPackets> registry = new PacketRegistry<>(TestPackets.class);
 
     assertEquals(0, registry.getId(new Alpha(1)));
     assertEquals(1, registry.getId(new Beta("x")));
@@ -25,16 +23,14 @@ public class PacketRegistryTest {
 
   @Test
   public void unregisteredPacketHasNegativeId() {
-    final PacketRegistry registry = new PacketRegistry();
-    registry.registerPacket(Alpha.class, Alpha.CODEC);
+    final PacketRegistry<TestPackets> registry = new PacketRegistry<>(TestPackets.class);
 
-    assertEquals(-1, registry.getId(new Beta("x")));
+    assertEquals(-1, registry.getId(new Unregistered("x")));
   }
 
   @Test
   public void encodeDecodeRoundTrip() {
-    final PacketRegistry registry = new PacketRegistry();
-    registry.registerPacket(Alpha.class, Alpha.CODEC);
+    final PacketRegistry<TestPackets> registry = new PacketRegistry<>(TestPackets.class);
 
     final Alpha original = new Alpha(77);
     final OutputBuffer out = OutputBuffer.create();
@@ -46,9 +42,9 @@ public class PacketRegistryTest {
 
   @Test
   public void handlerInvokedOnHandle() {
-    final PacketRegistry registry = new PacketRegistry();
+    final PacketRegistry<TestPackets> registry = new PacketRegistry<>(TestPackets.class);
     final AtomicInteger received = new AtomicInteger();
-    registry.registerPacket(Alpha.class, Alpha.CODEC, packet -> received.set(packet.value()));
+    registry.registerPacket(TestPackets.ALPHA, (Alpha packet) -> received.set(packet.value()));
 
     registry.handle(new Alpha(555));
     assertEquals(555, received.get());
@@ -56,25 +52,34 @@ public class PacketRegistryTest {
 
   @Test
   public void oneWayPacketHandleThrows() {
-    final PacketRegistry registry = new PacketRegistry();
-    registry.registerPacket(Alpha.class, Alpha.CODEC);
+    final PacketRegistry<TestPackets> registry = new PacketRegistry<>(TestPackets.class);
 
     assertThrows(IllegalArgumentException.class, () -> registry.handle(new Alpha(1)));
   }
 
   @Test
+  public void handlerCanBeReRegistered() {
+    final PacketRegistry<TestPackets> registry = new PacketRegistry<>(TestPackets.class);
+    final AtomicInteger first = new AtomicInteger();
+    final AtomicInteger second = new AtomicInteger();
+    registry.registerPacket(TestPackets.ALPHA, (Alpha packet) -> first.set(packet.value()));
+    registry.registerPacket(TestPackets.ALPHA, (Alpha packet) -> second.set(packet.value()));
+
+    registry.handle(new Alpha(42));
+    assertEquals(0, first.get());
+    assertEquals(42, second.get());
+  }
+
+  @Test
   public void getPacketsIsUnmodifiable() {
-    final PacketRegistry registry = new PacketRegistry();
-    registry.registerPacket(Alpha.class, Alpha.CODEC);
+    final PacketRegistry<TestPackets> registry = new PacketRegistry<>(TestPackets.class);
 
     assertThrows(UnsupportedOperationException.class, () -> registry.getPackets().clear());
   }
 
   @Test
-  public void getPacketsPreservesRegistrationOrder() {
-    final PacketRegistry registry = new PacketRegistry();
-    registry.registerPacket(Alpha.class, Alpha.CODEC);
-    registry.registerPacket(Beta.class, Beta.CODEC);
+  public void getPacketsPreservesEnumOrder() {
+    final PacketRegistry<TestPackets> registry = new PacketRegistry<>(TestPackets.class);
 
     final List<PacketEntry<? extends Packet<?>>> packets = registry.getPackets();
     assertEquals(2, packets.size());
@@ -84,12 +89,34 @@ public class PacketRegistryTest {
 
   @Test
   public void encodeUnregisteredThrows() {
-    final PacketRegistry registry = new PacketRegistry();
-    registry.registerPacket(Alpha.class, Alpha.CODEC);
+    final PacketRegistry<TestPackets> registry = new PacketRegistry<>(TestPackets.class);
 
     assertThrows(
         IndexOutOfBoundsException.class,
-        () -> registry.encode(new Beta("unregistered"), OutputBuffer.create()));
+        () -> registry.encode(new Unregistered("unregistered"), OutputBuffer.create()));
+  }
+
+  private enum TestPackets implements PacketType {
+    ALPHA(Alpha.class, Alpha.CODEC),
+    BETA(Beta.class, Beta.CODEC);
+
+    private final Class<? extends Packet<?>> packetClass;
+    private final PacketCodec<?> codec;
+
+    TestPackets(final Class<? extends Packet<?>> packetClass, final PacketCodec<?> codec) {
+      this.packetClass = packetClass;
+      this.codec = codec;
+    }
+
+    @Override
+    public Class<? extends Packet<?>> packetClass() {
+      return packetClass;
+    }
+
+    @Override
+    public PacketCodec<?> codec() {
+      return codec;
+    }
   }
 
   private record Alpha(int value) implements Packet<Alpha> {
@@ -124,6 +151,20 @@ public class PacketRegistryTest {
 
     @Override
     public PacketCodec<Beta> getCodec() {
+      return CODEC;
+    }
+  }
+
+  private record Unregistered(String text) implements Packet<Unregistered> {
+    private static final PacketCodec<Unregistered> CODEC =
+        PacketCodec.of(in -> new Unregistered(in.readUTF()), (p, out) -> out.writeUTF(p.text()));
+
+    private Unregistered(final InputBuffer in) {
+      this(in.readUTF());
+    }
+
+    @Override
+    public PacketCodec<Unregistered> getCodec() {
       return CODEC;
     }
   }

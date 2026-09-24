@@ -16,7 +16,7 @@ public class Connection<T extends Transport<T>> {
   private final ConnectionPipeline pipeline;
   private final BiConsumer<Connection<T>, Throwable> onException;
 
-  private PacketRegistry registry;
+  private PacketRegistry<?> registry;
   private volatile boolean disconnected = false;
   private volatile boolean handlingException = false;
 
@@ -89,11 +89,11 @@ public class Connection<T extends Transport<T>> {
     return pipeline;
   }
 
-  public PacketRegistry getRegistry() {
+  public PacketRegistry<?> getRegistry() {
     return registry;
   }
 
-  public void setRegistry(final PacketRegistry registry) {
+  public void setRegistry(final PacketRegistry<?> registry) {
     this.registry = registry;
   }
 

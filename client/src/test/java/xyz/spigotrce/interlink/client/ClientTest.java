@@ -10,6 +10,7 @@ import xyz.spigotrce.interlink.connection.TcpTransport;
 import xyz.spigotrce.interlink.packet.Packet;
 import xyz.spigotrce.interlink.packet.PacketCodec;
 import xyz.spigotrce.interlink.packet.PacketRegistry;
+import xyz.spigotrce.interlink.packet.PacketType;
 import java.net.ServerSocket;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -79,10 +80,10 @@ public class ClientTest {
     }
   }
 
-  private static PacketRegistry clientRegistry(final AtomicInteger handledSeq) {
-    final PacketRegistry registry = new PacketRegistry();
+  private static PacketRegistry<TestPackets> clientRegistry(final AtomicInteger handledSeq) {
+    final PacketRegistry<TestPackets> registry = new PacketRegistry<>(TestPackets.class);
     registry.registerPacket(
-        PingPacket.class, PingPacket.CODEC, packet -> handledSeq.set(packet.seq()));
+        TestPackets.PING, (PingPacket packet) -> handledSeq.set(packet.seq()));
     return registry;
   }
 
@@ -142,6 +143,28 @@ public class ClientTest {
     @Override
     public PacketCodec<PingPacket> getCodec() {
       return CODEC;
+    }
+  }
+
+  private enum TestPackets implements PacketType {
+    PING(PingPacket.class, PingPacket.CODEC);
+
+    private final Class<? extends Packet<?>> packetClass;
+    private final PacketCodec<?> codec;
+
+    TestPackets(final Class<? extends Packet<?>> packetClass, final PacketCodec<?> codec) {
+      this.packetClass = packetClass;
+      this.codec = codec;
+    }
+
+    @Override
+    public Class<? extends Packet<?>> packetClass() {
+      return packetClass;
+    }
+
+    @Override
+    public PacketCodec<?> codec() {
+      return codec;
     }
   }
 }

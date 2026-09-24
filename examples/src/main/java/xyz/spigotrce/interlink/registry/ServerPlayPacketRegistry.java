@@ -5,23 +5,25 @@ import xyz.spigotrce.interlink.connection.Connection;
 import xyz.spigotrce.interlink.packet.ChatPacket;
 import xyz.spigotrce.interlink.packet.DisconnectPacket;
 import xyz.spigotrce.interlink.packet.PacketRegistry;
+import xyz.spigotrce.interlink.packet.PlayPackets;
 import java.util.Map.Entry;
 
-public class ServerPlayPacketRegistry extends PacketRegistry {
+public class ServerPlayPacketRegistry extends PacketRegistry<PlayPackets> {
   public final Connection connection;
 
   public ServerPlayPacketRegistry(final Connection connection) {
+    super(PlayPackets.class);
     this.connection = connection;
 
-    registerPacket(DisconnectPacket.class, DisconnectPacket.CODEC, this::handle);
-    registerPacket(ChatPacket.class, ChatPacket.CODEC, this::handle);
+    registerPacket(PlayPackets.DISCONNECT, this::handleDisconnect);
+    registerPacket(PlayPackets.CHAT, this::handleChat);
   }
 
-  public void handle(final DisconnectPacket packet) {
+  public void handleDisconnect(final DisconnectPacket packet) {
     connection.close();
   }
 
-  public void handle(final ChatPacket packet) {
+  public void handleChat(final ChatPacket packet) {
     String username = "";
     for (final Connection namedConnection : TestServer.namedConnections.values()) {
       if (namedConnection == connection) {

@@ -8,21 +8,21 @@ import xyz.spigotrce.interlink.layer.impl.CompressionLayer;
 import xyz.spigotrce.interlink.packet.ChatPacket;
 import xyz.spigotrce.interlink.packet.DisconnectPacket;
 import xyz.spigotrce.interlink.packet.HandshakePacket;
+import xyz.spigotrce.interlink.packet.LoginPackets;
 import xyz.spigotrce.interlink.packet.LoginSuccessPacket;
 import xyz.spigotrce.interlink.packet.PacketRegistry;
 
-public class ServerLoginPacketRegistry extends PacketRegistry {
+public class ServerLoginPacketRegistry extends PacketRegistry<LoginPackets> {
   public final Connection<TcpTransport> connection;
 
   public ServerLoginPacketRegistry(final Connection<TcpTransport> connection) {
+    super(LoginPackets.class);
     this.connection = connection;
 
-    registerPacket(HandshakePacket.class, HandshakePacket.CODEC, this::handle);
-    registerPacket(DisconnectPacket.class, DisconnectPacket.CODEC);
-    registerPacket(LoginSuccessPacket.class, LoginSuccessPacket.CODEC);
+    registerPacket(LoginPackets.HANDSHAKE, this::handleHandshake);
   }
 
-  public void handle(final HandshakePacket packet) {
+  public void handleHandshake(final HandshakePacket packet) {
     if (TestServer.namedConnections.containsKey(packet.username())) {
       connection.send(new DisconnectPacket("Username already taken"));
       connection.close();
