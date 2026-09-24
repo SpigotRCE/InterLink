@@ -12,10 +12,23 @@ import java.util.zip.Inflater;
  * @author SpigotRCE
  */
 public final class ZLibCompressor implements Compressor {
+  /**
+   * Constructs a new ZLibCompressor with a fresh, lazily initialized deflater/inflater pair per
+   * thread.
+   */
+  public ZLibCompressor() {}
+
   private static final ThreadLocal<Deflater> DEFLATER =
       ThreadLocal.withInitial(() -> new Deflater(Deflater.DEFAULT_COMPRESSION));
   private static final ThreadLocal<Inflater> INFLATER = ThreadLocal.withInitial(Inflater::new);
 
+  /**
+   * Compresses the given data using a {@link Deflater} at the default compression level.
+   *
+   * @param data the uncompressed bytes to compress
+   * @return the zlib-compressed bytes
+   * @throws IOException if compression fails
+   */
   @Override
   public byte[] compress(final byte[] data) throws IOException {
     final Deflater deflater = DEFLATER.get();
@@ -35,6 +48,13 @@ public final class ZLibCompressor implements Compressor {
     }
   }
 
+  /**
+   * Decompresses the given zlib-compressed data using an {@link Inflater}.
+   *
+   * @param data the zlib-compressed bytes to decompress
+   * @return the uncompressed bytes
+   * @throws IOException if decompression fails, the input is truncated, or no progress can be made
+   */
   @Override
   public byte[] decompress(final byte[] data) throws IOException {
     final Inflater inflater = INFLATER.get();

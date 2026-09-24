@@ -47,6 +47,12 @@ public final class AesGcmCipher implements Cipher {
   private final ThreadLocal<javax.crypto.Cipher> decryptCipher =
       ThreadLocal.withInitial(AesGcmCipher::newCipher);
 
+  /**
+   * Constructs a new AES-GCM cipher using the given raw key bytes.
+   *
+   * @param key the raw AES key bytes (128, 192, or 256 bits); key validity is checked when the
+   *     cipher is first used
+   */
   public AesGcmCipher(final byte[] key) {
     this.key = new SecretKeySpec(key, "AES");
   }
@@ -59,6 +65,15 @@ public final class AesGcmCipher implements Cipher {
     }
   }
 
+  /**
+   * Authenticated-encrypts the given plaintext with a fresh random 12-byte IV, producing a
+   * self-contained frame of {@code [12-byte IV][ciphertext][16-byte tag]}.
+   *
+   * @param data the plaintext bytes to encrypt
+   * @return the encrypted frame, prefixed with the random IV and followed by the GCM tag
+   * @throws IOException if the underlying {@code AES/GCM/NoPadding} cipher fails to initialize or
+   *     to process the data
+   */
   @Override
   public byte[] encrypt(final byte[] data) throws IOException {
     try {
@@ -77,6 +92,14 @@ public final class AesGcmCipher implements Cipher {
     }
   }
 
+  /**
+   * Authenticated-decrypts a frame produced by {@link #encrypt(byte[])}.
+   *
+   * @param data the complete frame of {@code [12-byte IV][ciphertext][16-byte tag]}
+   * @return the recovered plaintext
+   * @throws IOException if the frame is truncated, the authentication tag does not match, or the
+   *     key is invalid
+   */
   @Override
   public byte[] decrypt(final byte[] data) throws IOException {
     if (data.length < MIN_FRAME_LENGTH) {

@@ -24,6 +24,26 @@ subprojects {
         options.encoding = 'UTF-8'
     }
 
+    tasks.withType(Javadoc).configureEach {
+        options.encoding = 'UTF-8'
+    }
+
+    if (file('src/main/java').exists()) {
+        tasks.register('javadocJar', Jar) {
+            archiveClassifier = 'javadoc'
+            from tasks.named('javadoc')
+        }
+
+        tasks.register('sourcesJar', Jar) {
+            archiveClassifier = 'sources'
+            from sourceSets.main.allJava
+        }
+
+        tasks.named('assemble') {
+            dependsOn tasks.named('javadocJar'), tasks.named('sourcesJar')
+        }
+    }
+
     tasks.withType(Test).configureEach {
         useJUnitPlatform()
     }

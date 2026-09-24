@@ -4,11 +4,41 @@ dependencies {
         .each { implementation it }
 }
 
+def libraryProjects =
+    rootProject.subprojects.findAll { it != project && it.name != 'examples' }
+
+tasks.register('aggregatedJavadoc', Javadoc) {
+    group = 'documentation'
+    description = 'Generates a single javadoc bundle across all library modules.'
+
+    source = files(libraryProjects.collectMany { it.sourceSets.main.allJava.files })
+    classpath = files(
+        libraryProjects.collect { it.sourceSets.main.output + it.configurations.runtimeClasspath }
+    )
+    destinationDir = layout.buildDirectory.dir('docs/javadoc').get().asFile
+    options.encoding = 'UTF-8'
+}
+
+tasks.register('sourcesJar', Jar) {
+    archiveClassifier = 'sources'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from(
+        libraryProjects.collect { it.sourceSets.main.allJava }
+    )
+}
+
 jar {
-    dependsOn configurations.runtimeClasspath
+    dependsOn configurations.runtimeClasspath, tasks.named('aggregatedJavadoc')
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
     exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+    from(tasks.named('aggregatedJavadoc')) {
+        into 'javadoc'
+    }
+}
+
+tasks.named('assemble') {
+    dependsOn tasks.named('sourcesJar')
 }

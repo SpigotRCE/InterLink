@@ -82,11 +82,21 @@ public class PacketRegistry<E extends Enum<E> & PacketType> {
     entry.codec().write(packet, out);
   }
 
+  /**
+   * Returns the packet id of the given packet.
+   *
+   * @param packet {@link Packet} to look up
+   * @return the packet id, or {@code -1} if the packet is not registered
+   */
   public int getId(final Packet<?> packet) {
     return idCache.getOrDefault(packet.getClass(), -1);
   }
 
-  /** Returns an unmodifiable view of the registered packets in registration order. */
+  /**
+   * Returns an unmodifiable view of the registered packets in registration order.
+   *
+   * @return an unmodifiable view of the registered packets
+   */
   public List<PacketEntry<? extends Packet<?>>> getPackets() {
     return Collections.unmodifiableList(packets);
   }
@@ -96,6 +106,7 @@ public class PacketRegistry<E extends Enum<E> & PacketType> {
    *
    * @param id the packet id
    * @param in {@link InputBuffer} to decode from
+   * @return the decoded {@link Packet}
    */
   public Packet<?> decode(final int id, final InputBuffer in) {
     @SuppressWarnings("unchecked")
@@ -106,7 +117,7 @@ public class PacketRegistry<E extends Enum<E> & PacketType> {
   /**
    * Handles the packet by dispatching it to the handler registered for its id.
    *
-   * @param packet {@link Packet} packet to be handled.
+   * @param packet {@link Packet} to be handled
    */
   public void handle(final Packet<?> packet) {
     @SuppressWarnings("unchecked")

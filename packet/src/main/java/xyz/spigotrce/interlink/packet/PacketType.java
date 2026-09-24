@@ -7,7 +7,17 @@ package xyz.spigotrce.interlink.packet;
  * @author SpigotRCE
  */
 public interface PacketType {
+  /**
+   * Returns the {@link Class} of the {@link Packet} represented by this enum constant.
+   *
+   * @return the packet {@link Class}
+   */
   Class<? extends Packet<?>> packetClass();
 
+  /**
+   * Returns the {@link PacketCodec} used to encode and decode this {@link Packet}.
+   *
+   * @return the packet {@link PacketCodec}
+   */
   PacketCodec<?> codec();
 }

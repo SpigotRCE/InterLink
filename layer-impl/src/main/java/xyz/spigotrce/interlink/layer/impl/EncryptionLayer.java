@@ -22,10 +22,24 @@ import java.io.IOException;
 public class EncryptionLayer implements Layer {
   private final Cipher cipher;
 
+  /**
+   * Creates a layer that encrypts outbound messages and decrypts inbound messages with the given
+   * cipher.
+   *
+   * @param cipher the cipher used for encryption and decryption
+   */
   public EncryptionLayer(final Cipher cipher) {
     this.cipher = cipher;
   }
 
+  /**
+   * Decrypts the message with the {@link Cipher} and continues the inbound chain with the
+   * plaintext.
+   *
+   * @param data the encrypted message received from the wire
+   * @param ctx the context used to continue the inbound chain
+   * @throws LayerException if decryption fails because the message was corrupted or malformed
+   */
   @Override
   public void onInbound(final byte[] data, final LayerContext ctx) throws LayerException {
     try {
@@ -35,6 +49,14 @@ public class EncryptionLayer implements Layer {
     }
   }
 
+  /**
+   * Encrypts the message with the {@link Cipher} and continues the outbound chain with the
+   * ciphertext.
+   *
+   * @param data the plaintext message from the application
+   * @param ctx the context used to continue the outbound chain
+   * @throws LayerException if encryption fails
+   */
   @Override
   public void onOutbound(final byte[] data, final LayerContext ctx) throws LayerException {
     try {

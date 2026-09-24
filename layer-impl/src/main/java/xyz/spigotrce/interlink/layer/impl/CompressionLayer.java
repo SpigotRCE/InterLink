@@ -40,14 +40,34 @@ public class CompressionLayer implements Layer {
   private final int threshold;
   private final int maxDecompressedLength;
 
+  /**
+   * Creates a layer that attempts to compress every message with the given compressor, using a
+   * threshold of {@code 0} and a maximum decompressed length of 8 MiB.
+   *
+   * @param compressor the compressor used for deflate and inflate
+   */
   public CompressionLayer(final Compressor compressor) {
     this(compressor, 0);
   }
 
+  /**
+   * Creates a layer that attempts to compress messages of at least {@code threshold} bytes with
+   * the given compressor, using a maximum decompressed length of 8 MiB.
+   *
+   * @param compressor the compressor used for deflate and inflate
+   * @param threshold the minimum payload length, in bytes, before compression is attempted
+   */
   public CompressionLayer(final Compressor compressor, final int threshold) {
     this(compressor, threshold, 8 * 1024 * 1024);
   }
 
+  /**
+   * Creates a layer with a custom compression threshold and decompression limit.
+   *
+   * @param compressor the compressor used for deflate and inflate
+   * @param threshold the minimum payload length, in bytes, before compression is attempted
+   * @param maxDecompressedLength the maximum number of bytes a decompressed payload may contain
+   */
   public CompressionLayer(
       final Compressor compressor, final int threshold, final int maxDecompressedLength) {
     this.compressor = compressor;
@@ -55,6 +75,15 @@ public class CompressionLayer implements Layer {
     this.maxDecompressedLength = maxDecompressedLength;
   }
 
+  /**
+   * Strips the flag byte, then forwards the payload unchanged when the flag is {@code 0x00} or
+   * decompresses it before continuing the inbound chain when the flag is {@code 0x01}.
+   *
+   * @param data the framed message received from the wire
+   * @param ctx the context used to continue the inbound chain
+   * @throws LayerException if the frame is truncated or empty, carries an unknown flag, contains
+   *     corrupt compressed data, or decompresses to more than {@code maxDecompressedLength} bytes
+   */
   @Override
   public void onInbound(final byte[] data, final LayerContext ctx) throws LayerException {
     if (data.length < 1) {
@@ -85,6 +114,15 @@ public class CompressionLayer implements Layer {
     ctx.fireInbound(decompressed);
   }
 
+  /**
+   * Prefixes the message with a flag byte and continues the outbound chain. Messages shorter than
+   * {@code threshold} and messages for which compression does not shrink the payload are forwarded
+   * raw with flag {@code 0x00}; messages that compress are forwarded with flag {@code 0x01}.
+   *
+   * @param data the application message to frame
+   * @param ctx the context used to continue the outbound chain
+   * @throws LayerException if compressing the message fails
+   */
   @Override
   public void onOutbound(final byte[] data, final LayerContext ctx) throws LayerException {
     if (data.length == 0 || data.length < threshold) {

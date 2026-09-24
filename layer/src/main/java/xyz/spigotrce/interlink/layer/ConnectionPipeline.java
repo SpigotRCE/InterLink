@@ -29,7 +29,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * decompression. Encrypted bytes are indistinguishable from random noise and will not compress,
  * which is exactly why compression must always run application-ward of encryption.
  *
- * <p>Thread safety: each {@link #read()} / {@link #write()} runs its whole layer chain
+ * <p>Thread safety: each {@link #read()} / {@link #write(byte[])} runs its whole layer chain
  * synchronously on the calling thread, so no layer ever receives data on its own thread. A pipeline
  * may therefore be shared between threads as long as every {@link Layer} it contains is itself safe
  * for concurrent use. Adding or removing layers at runtime is thread-safe thanks to a copy-on-write
@@ -42,11 +42,25 @@ public class ConnectionPipeline {
   private final List<LayerEntry> layers = new CopyOnWriteArrayList<>();
   private final Map<String, Object> sharedState = new HashMap<>();
   private final BlockingQueue<byte[]> inboundQueue = new LinkedBlockingQueue<>();
+
+  /**
+   * Creates a new pipeline wired to the given transport endpoints.
+   *
+   * @param reader the source of raw frames from the wire
+   * @param writer the sink for raw frames to the wire
+   */
   public ConnectionPipeline(final WireReader reader, final WireWriter writer) {
     this.reader = reader;
     this.writer = writer;
   }
 
+  /**
+   * Adds a layer at the wire end of the pipeline. Inbound data reaches this layer first and
+   * outbound data reaches it last.
+   *
+   * @param name the unique name to register the layer under
+   * @param layer the layer to add
+   */
   public void addFirst(final String name, final Layer layer) {
     add(name, layer, 0);
   }
@@ -66,10 +80,24 @@ public class ConnectionPipeline {
     layers.add(index, new LayerEntry(name, layer));
   }
 
+  /**
+   * Adds a layer at the application end of the pipeline. Outbound data reaches this layer first
+   * and inbound data reaches it last.
+   *
+   * @param name the unique name to register the layer under
+   * @param layer the layer to add
+   */
   public void addLast(final String name, final Layer layer) {
     add(name, layer, layers.size());
   }
 
+  /**
+   * Adds a layer directly before an existing layer located by name.
+   *
+   * @param name the unique name to register the new layer under
+   * @param target the name of the existing layer to insert before
+   * @param layer the layer to add
+   */
   public void addBefore(final String name, final String target, final Layer layer) {
     add(name, layer, indexOf(target));
   }
@@ -83,10 +111,22 @@ public class ConnectionPipeline {
     throw new IllegalArgumentException("No layer named: " + name);
   }
 
+  /**
+   * Adds a layer directly after an existing layer located by name.
+   *
+   * @param name the unique name to register the new layer under
+   * @param target the name of the existing layer to insert after
+   * @param layer the layer to add
+   */
   public void addAfter(final String name, final String target, final Layer layer) {
     add(name, layer, indexOf(target) + 1);
   }
 
+  /**
+   * Removes the layer registered under the given name from the pipeline.
+   *
+   * @param name the name of the layer to remove
+   */
   public void remove(final String name) {
     for (int i = 0; i < layers.size(); i++) {
       if (layers.get(i).name().equals(name)) {
@@ -101,6 +141,8 @@ public class ConnectionPipeline {
    * The pipeline-wide shared state store. Layers read and write values here to coordinate without
    * holding direct references to each other, e.g. a handshake layer stashing a negotiated key for a
    * later layer to consume. Not thread-safe; write during setup only.
+   *
+   * @return the pipeline-wide shared state store
    */
   public Map<String, Object> sharedState() {
     return sharedState;
@@ -109,6 +151,9 @@ public class ConnectionPipeline {
   /**
    * Reads one message from the wire and runs the inbound chain over it. Returns the resulting
    * application bytes, or {@code null} if the chain produced none.
+   *
+   * @return the application message produced by the inbound chain, or {@code null} if none
+   * @throws IOException if reading from the wire or inbound processing fails
    */
   public byte[] read() throws IOException {
     final byte[] queued = inboundQueue.poll();
@@ -136,6 +181,9 @@ public class ConnectionPipeline {
   /**
    * Runs the outbound chain over one application message and sends every frame the chain produces
    * to the transport.
+   *
+   * @param data the application message to run through the outbound chain
+   * @throws IOException if outbound processing or writing to the wire fails
    */
   public void write(final byte[] data) throws IOException {
     try {
@@ -161,12 +209,24 @@ public class ConnectionPipeline {
   /** Reads one frame from the wire. Thrown exceptions propagate as {@link IOException}. */
   @FunctionalInterface
   public interface WireReader {
+    /**
+     * Reads one frame from the wire.
+     *
+     * @return the raw frame bytes read from the wire
+     * @throws IOException if reading from the wire fails
+     */
     byte[] read() throws IOException;
   }
 
   /** Writes one frame to the wire. Thrown exceptions propagate as {@link IOException}. */
   @FunctionalInterface
   public interface WireWriter {
+    /**
+     * Writes one frame to the wire.
+     *
+     * @param data the raw frame bytes to write
+     * @throws IOException if writing to the wire fails
+     */
     void write(byte[] data) throws IOException;
   }
 

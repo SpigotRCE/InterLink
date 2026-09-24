@@ -44,6 +44,12 @@ public final class AesCfbCipher implements Cipher {
   private final ThreadLocal<javax.crypto.Cipher> decryptCipher =
       ThreadLocal.withInitial(AesCfbCipher::newCipher);
 
+  /**
+   * Constructs a new AES-CFB cipher using the given raw key bytes.
+   *
+   * @param key the raw AES key bytes (128, 192, or 256 bits); key validity is checked when the
+   *     cipher is first used
+   */
   public AesCfbCipher(final byte[] key) {
     this.key = new SecretKeySpec(key, "AES");
   }
@@ -56,6 +62,15 @@ public final class AesCfbCipher implements Cipher {
     }
   }
 
+  /**
+   * Encrypts the given plaintext with a fresh random 16-byte IV, producing a self-contained frame
+   * of {@code [16-byte IV][ciphertext]}.
+   *
+   * @param data the plaintext bytes to encrypt
+   * @return the encrypted frame, prefixed with the random IV
+   * @throws IOException if the underlying {@code AES/CFB/PKCS5Padding} cipher fails to initialize
+   *     or to process the data
+   */
   @Override
   public byte[] encrypt(final byte[] data) throws IOException {
     try {
@@ -74,6 +89,13 @@ public final class AesCfbCipher implements Cipher {
     }
   }
 
+  /**
+   * Decrypts a frame produced by {@link #encrypt(byte[])}.
+   *
+   * @param data the complete frame of {@code [16-byte IV][ciphertext]}
+   * @return the recovered plaintext
+   * @throws IOException if the frame is truncated, corrupted, or the key is invalid
+   */
   @Override
   public byte[] decrypt(final byte[] data) throws IOException {
     if (data.length < IV_LENGTH + BLOCK_LENGTH) {
